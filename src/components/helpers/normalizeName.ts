@@ -1,11 +1,11 @@
-export default function normalizePokemonName(name: string): string {
+export default function normalizeName(name: string): string {
   const normalized = name.trim().toLowerCase().replace(/\s+/g, "-");
 
-  // Mega
-  if (normalized === "mega-charizard-x") return "charizard-mega-x";
-  if (normalized === "mega-charizard-y") return "charizard-mega-y";
-  if (normalized === "mega-mewtwo-x") return "mewtwo-mega-x";
-  if (normalized === "mega-mewtwo-y") return "mewtwo-mega-y";
+  // Mega X/Y special cases
+if (normalized === "mega-charizard-x") return "charizard-mega-x";
+if (normalized === "mega-charizard-y") return "charizard-mega-y";
+if (normalized === "mega-mewtwo-x") return "mewtwo-mega-x";
+if (normalized === "mega-mewtwo-y") return "mewtwo-mega-y";
 
   if (normalized.startsWith("mega-")) {
     return `${normalized.slice(5)}-mega`;
@@ -37,8 +37,6 @@ export default function normalizePokemonName(name: string): string {
     "jangmo-o": "jangmo-o",
     "hakamo-o": "hakamo-o",
     "kommo-o": "kommo-o",
-    farfetchd: "farfetchd",
-    sirfetchd: "sirfetchd",
 
     // Gendered Pokémon
     "nidoran-male": "nidoran-m",

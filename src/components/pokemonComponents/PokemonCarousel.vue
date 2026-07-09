@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, onMounted } from "vue";
+import { computed, ref, onMounted, watch } from "vue";
 import { useRouter } from "vue-router";
 import type { PokemonListItem } from "@/interface/pokemonListItem";
 import dingSound from "@/assets/sounds/A-effect.m4a";
@@ -7,6 +7,9 @@ import dingSound from "@/assets/sounds/A-effect.m4a";
 const ding = new Audio(dingSound);
 const props = defineProps<{
   pokemonList: PokemonListItem[];
+  searchText: string;
+  selectedPokemon: string
+
 }>();
 
 const router = useRouter();
@@ -49,7 +52,7 @@ const visiblePokemon = computed(() => {
 
   if (!props.pokemonList.length) return items;
 
-  const radius = 400;
+  const radius = 580;
   const spacing = 90;
 
   for (let offset = -HALF_WINDOW; offset <= HALF_WINDOW; offset++) {
@@ -64,22 +67,24 @@ const visiblePokemon = computed(() => {
 
     const x = radius - Math.sqrt(radius * radius - clampedY * clampedY);
 
-    items.push({
-      pokemon: props.pokemonList[index]!,
+    const currentPokemon = props.pokemonList[index]!
 
-      id: index + 1,
+items.push({
+  pokemon: currentPokemon,
 
-      offset,
+  id: currentPokemon.id,
 
-      x,
+  offset,
 
-      y,
+  x,
 
-      opacity: 0.2 + 0.8 * Math.cos((distance / HALF_WINDOW) * (Math.PI / 2)),
-      scale: 0.85 + 0.25 * Math.cos((distance / HALF_WINDOW) * (Math.PI / 2)),
+  y,
 
-      zIndex: 100 - distance,
-    });
+  opacity: 0.2 + 0.8 * Math.cos((distance / HALF_WINDOW) * (Math.PI / 2)),
+  scale: 0.85 + 0.25 * Math.cos((distance / HALF_WINDOW) * (Math.PI / 2)),
+
+  zIndex: 100 - distance,
+})
   }
 
   return items;
@@ -99,6 +104,8 @@ function clickPokemon(offset: number) {
   while (index >= props.pokemonList.length) index -= props.pokemonList.length;
 
   selectPokemon(index);
+  router.push(`/pokemon/${props.pokemonList[selectedIndex.value]!.name}`);
+  playDing();
 }
 
 function onWheel(event: WheelEvent) {
@@ -115,6 +122,7 @@ function onWheel(event: WheelEvent) {
   }
 
   emit("select", props.pokemonList[selectedIndex.value]!);
+  playDing();
 }
 
 function onKeyDown(event: KeyboardEvent) {
@@ -124,6 +132,7 @@ function onKeyDown(event: KeyboardEvent) {
         selectedIndex.value++;
         emit("select", props.pokemonList[selectedIndex.value]!);
       }
+      playDing();
       break;
 
     case "ArrowUp":
@@ -131,14 +140,16 @@ function onKeyDown(event: KeyboardEvent) {
         selectedIndex.value--;
         emit("select", props.pokemonList[selectedIndex.value]!);
       }
+      playDing();
       break;
 
     case "Enter":
       router.push(`/pokemon/${props.pokemonList[selectedIndex.value]!.name}`);
+      playDing();
       break;
   }
 
-  playDing();
+
 }
 
 const carouselRef = ref<HTMLDivElement | null>(null);
@@ -146,15 +157,37 @@ const carouselRef = ref<HTMLDivElement | null>(null);
 onMounted(() => {
   carouselRef.value?.focus();
 });
+
+watch(
+  () => props.pokemonList,
+  () => {
+    selectedIndex.value = 0
+  }
+)
+
+watch(
+  () => props.selectedPokemon,
+  (name) => {
+    const index = props.pokemonList.findIndex(
+      pokemon => pokemon.name === name
+    )
+
+    if (index !== -1) {
+      selectedIndex.value = index
+    }
+  },
+  { immediate: true }
+)
 </script>
 
 <template>
   <div
-    class="carousel"
-    @wheel.prevent="onWheel"
-    tabindex="0"
-    @keydown="onKeyDown"
-  >
+  v-if="pokemonList.length > 0"
+  class="carousel"
+  @wheel.prevent="onWheel"
+  tabindex="0"
+  @keydown="onKeyDown"
+>
     <div
       v-for="item in visiblePokemon"
       :class="{
@@ -163,7 +196,7 @@ onMounted(() => {
       :key="item.id"
       class="listitem"
       :style="{
-        left: `${item.x + 60}px`,
+        left: `${item.x + 40}px`,
 
         top: `calc(50% + ${item.y}px)`,
 
@@ -192,6 +225,17 @@ scale(${item.scale})
       </span>
     </div>
   </div>
+ <div
+  v-else
+  class="noResults"
+>
+  <h2>No Pokémon Found</h2>
+
+  <p>
+    There are no results for
+    <strong>"{{ searchText }}"</strong>
+  </p>
+</div>
 </template>
 
 <style scoped>
@@ -221,7 +265,7 @@ scale(${item.scale})
   display: grid;
 
   grid-template-columns:
-    6rem
+    6.5rem
     60px
     1fr;
 
@@ -239,9 +283,12 @@ scale(${item.scale})
     opacity 0.25s;
 }
 
-.listitem.selected,
-.listitem:hover {
+.listitem.selected{
   background-image: url("@/assets/dexList/dexlistsecondSelect.png");
+}
+
+.listitem.selected .pokemonIcon{
+  animation-duration: 0.45s;
 }
 
 .dexNumber {
@@ -263,8 +310,27 @@ scale(${item.scale})
   animation: bob 1s infinite alternate;
 }
 
-.listitem:hover .pokemonIcon {
-  animation-duration: 0.45s;
+.noResults {
+  height: 100%;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+
+  text-align: center;
+
+  color: white;
+
+  gap: 1rem;
+}
+
+.noResults h2 {
+  font-size: 2.4rem;
+}
+
+.noResults p {
+  font-size: 1.5rem;
 }
 
 @keyframes bob {

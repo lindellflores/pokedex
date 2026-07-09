@@ -2,15 +2,20 @@
 import "../assets/main.css";
 import { ref, computed, onMounted, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import TypeBadge from "../components/pokemonComponents/typeBadges.vue";
-import type { Pokemon } from "../interface/pokemonInterface.ts";
-import type { PokemonSpecies } from "../interface/pokemonSpeciesInt.ts";
-import formatName from "@/components/helpers/formatName";
-import formatFlavorText from "@/components/helpers/formatText.ts";
-import normalizeName from "@/components/helpers/normalizeName.ts";
-import type { PokemonListItem } from "../interface/pokemonListItem.ts";
+import type { Pokemon } from "@/interface/pokemonInterface.ts";
+import type { PokemonSpecies } from "@/interface/pokemonSpeciesInt.ts";
+import formatFlavorText from "@/components/helpers/formatText";
+import normalizeName from "@/components/helpers/normalizeName";
+import type { PokemonListItem } from "@/interface/pokemonListItem.ts";
 import PokemonCarousel from "@/components/pokemonComponents/PokemonCarousel.vue";
 import { useMusic } from "@/composables/useMusic";
+import { gigantamaxMap } from "@/components/helpers/gigantamax"
+import PokemonInfo from "@/components/pokemonComponents/PokemonInfo.vue";
+import { versionPriority } from "@/components/helpers/versionPriority";
+import PokemonStats from "@/components/pokemonComponents/PokemonStats.vue";
+import PokedexEntry from "@/components/pokemonComponents/PokedexEntry.vue";
+import PokemonSearch from "@/components/pokemonComponents/PokemonSearch.vue";
+
 
 const route = useRoute();
 const { play } = useMusic();
@@ -18,38 +23,66 @@ const pokemonList = ref<PokemonListItem[]>([]);
 const species = ref<PokemonSpecies | null>(null);
 const pokemon = ref<Pokemon | null>(null);
 const loading = ref(false);
+const favorites = ref<string[]>([])
+const searchText = ref("")
 
 const error = ref("");
-const pokemonName = ref("");
 const router = useRouter();
 
-function searchPokemon() {
-  if (!pokemonName.value.trim()) return;
+function toggleFavorite() {
+  if (!pokemon.value) return
 
-  router.push(`/pokemon/${pokemonName.value.toLowerCase()}`);
-  pokemonName.value = "";
+  const name = pokemon.value.name
+  const index = favorites.value.indexOf(name)
+
+  if (index === -1) {
+    favorites.value.push(name)
+  } else {
+    favorites.value.splice(index, 1)
+  }
+}
+const isFavorite = computed(() => {
+  if (!pokemon.value) return false
+
+  return favorites.value.includes(pokemon.value.name)
+})
+
+function megaEvolve() {
+  if (!species.value) return
+
+  const megaForms = species.value.varieties.filter(v =>
+    v.pokemon.name.includes("mega")
+  )
+
+  if (megaForms.length === 0) {
+    alert("This Pokémon has no Mega Evolution.")
+    return
+  }
+
+  const mega = megaForms[0]
+
+if (!mega) {
+  alert("This Pokémon has no Mega Evolution.")
+  return
 }
 
-const sprite = computed(() => {
-  const name = pokemon.value?.name ? normalizeName(pokemon.value.name) : "";
+router.push(`/pokemon/${mega.pokemon.name}`)
 
-  return (
-    pokemon.value?.sprites.versions["generation-v"]["black-white"].animated
-      ?.front_default ??
-    (name ? `https://play.pokemonshowdown.com/sprites/ani/${name}.gif` : "")
-  );
-});
+}
 
-const versionPriority = [
-  "sword",
-  "shield",
-  "alpha-sapphire",
-  "omega-ruby",
-  "scarlet",
-  "violet",
-  "sun",
-  "x",
-];
+
+function gigantamax() {
+  if (!pokemon.value) return
+
+  const gmax = gigantamaxMap[pokemon.value.name]
+
+  if (!gmax) {
+    alert("This Pokémon cannot Gigantamax.")
+    return
+  }
+
+  router.push(`/pokemon/${gmax}`)
+}
 
 const pokedexEntry = computed(() => {
   if (!species.value) return null;
@@ -63,6 +96,20 @@ const pokedexEntry = computed(() => {
     }
   }
   return null;
+});
+
+function searchPokemon(name: string) {
+  router.push(`/pokemon/${name.toLowerCase()}`);
+}
+
+const filteredPokemonList = computed(() => {
+  if (!searchText.value) {
+    return pokemonList.value;
+  }
+
+  return pokemonList.value.filter((pokemon) =>
+    pokemon.name.startsWith(searchText.value.toLowerCase())
+  );
 });
 
 async function loadPokemon() {
@@ -102,6 +149,39 @@ async function loadPokemon() {
   }
 }
 
+async function evolve() {
+  if (!species.value || !pokemon.value) return
+
+  const response = await fetch(species.value.evolution_chain.url)
+  const evolutionData = await response.json()
+
+  const chain = evolutionData.chain
+
+  // First stage
+  if (
+    chain.species.name === pokemon.value.name &&
+    chain.evolves_to.length > 0
+  ) {
+    router.push(`/pokemon/${chain.evolves_to[0].species.name}`)
+    return
+  }
+
+  // Second stage
+  if (chain.evolves_to.length > 0) {
+    const secondStage = chain.evolves_to[0]
+
+    if (
+      secondStage.species.name === pokemon.value.name &&
+      secondStage.evolves_to.length > 0
+    ) {
+      router.push(`/pokemon/${secondStage.evolves_to[0].species.name}`)
+      return
+    }
+  }
+
+  alert("This Pokémon cannot evolve.")
+}
+
 onMounted(() => {
   loadPokemon();
   play();
@@ -116,7 +196,14 @@ onMounted(async () => {
   const response = await fetch("https://pokeapi.co/api/v2/pokemon?limit=1025");
 
   const data = await response.json();
-  pokemonList.value = data.results;
+
+  pokemonList.value = data.results.map(
+    (pokemon: PokemonListItem, index: number) => ({
+      id: index + 1,
+      name: pokemon.name,
+      url: pokemon.url,
+    }),
+  );
 });
 
 async function selectPokemon(selected: PokemonListItem) {
@@ -129,6 +216,7 @@ async function selectPokemon(selected: PokemonListItem) {
   });
 }
 </script>
+
 
 <template>
   <div class="overall">
@@ -145,105 +233,19 @@ async function selectPokemon(selected: PokemonListItem) {
           <!-- PokemonNameTitle -->
           <div class="topSection">
             <div class="leftInfo">
-              <div class="PokemonMain">
-                <span class="pokename">
-                  No.{{ pokemon.id.toString().padStart(3, "0") }}
-                  -
-                  {{ formatName(pokemon.name) }}
-                </span>
-
-                <p class="genus">
-                  The
-                  {{
-                    species?.genera.find((g) => g.language.name === "en")?.genus
-                  }}
-                </p>
-              </div>
-
-              <!-- sprite -->
-
-              <div class="sprite">
-                <img
-                  v-if="sprite.includes('play.pokemonshowdown.com')"
-                  :src="sprite"
-                  class="showdown-sprite"
-                />
-
-                <img v-else :src="sprite" class="normal-sprite" />
-              </div>
-
-              <!-- types + ability -->
-
-              <div class="secondRow">
-                <div class="types">
-                  <span>TYPE:</span>
-
-                  <div class="typeimg">
-                    <TypeBadge
-                      v-for="type in pokemon.types"
-                      :key="type.slot"
-                      :type="type.type.name"
-                    />
-                  </div>
-                </div>
-
-                <div class="abilities">
-                  <span>ABILITY:</span>
-
-                  <div class="abilitylist">
-                    <p>
-                      {{
-                        pokemon.abilities
-                          .filter((a) => !a.is_hidden)
-                          .map((a) => formatName(a.ability.name))
-                          .join(", ")
-                      }}
-                    </p>
-                  </div>
-                </div>
-              </div>
+              <PokemonInfo :pokemon="pokemon" :species="species"/>
               <div class="panelButtons">
-                <button id="EvolveBtn">Evolve</button>
-                <button id="MegaBtn">Mega Evolution</button>
-                <button id="GmaxBtn">Gigantamax</button>
+                <button @click="evolve"id="EvolveBtn">EVOLVE</button>
+                <button @click="megaEvolve" id="MegaBtn">MEGA EVOLVE</button>
+                <button @click="gigantamax" id="GmaxBtn">GIGANTAMAX</button>
               </div>
             </div>
 
             <!-- stats -->
             <div class="rightSide">
-              <div class="stats">
-                <span>STATS</span>
-                <div
-                  v-for="stat in pokemon.stats"
-                  :key="stat.stat.name"
-                  class="stat"
-                >
-                  <span>
-                    {{ formatName(stat.stat.name) }}
-                  </span>
-
-                  <div class="bar">
-                    <div
-                      class="fill"
-                      :style="{
-                        width: `${(stat.base_stat / 200) * 100}%`,
-                      }"
-                    />
-                  </div>
-
-                  <span>
-                    {{ stat.base_stat }}
-                  </span>
-                </div>
-              </div>
-
+              <PokemonStats :pokemon="pokemon" />
               <!-- description -->
-
-              <div class="pokedex">
-                <p>
-                  {{ formatFlavorText(pokedexEntry?.flavor_text ?? "") }}
-                </p>
-              </div>
+              <PokedexEntry :text="pokedexEntry?.flavor_text ?? ''"/>
             </div>
           </div>
         </div>
@@ -251,29 +253,61 @@ async function selectPokemon(selected: PokemonListItem) {
 
       <!-- SEARCH -->
 
-      <section class="searchContainer">
-        <div class="searchTitle">Looking for a certain Pokemon?</div>
-
-        <input
-          class="input"
-          v-model="pokemonName"
-          placeholder="Search here!"
-          @keyup.enter="searchPokemon"
-        />
-      </section>
-    </section>
+<PokemonSearch
+  @filter="searchText = $event"
+    :searchText="searchText"
+  @search="searchPokemon"
+/>    </section>
 
     <!-- RIGHT PANEL -->
 
     <section class="rightPanel">
-      <PokemonCarousel :pokemonList="pokemonList" @select="selectPokemon" />
-
-      <button class="exitButton">EXIT</button>
+<PokemonCarousel
+  :pokemonList="filteredPokemonList"
+  :searchText="searchText"
+  :selectedPokemon="pokemon?.name ?? ''"
+  @select="selectPokemon"
+/>    <button class="exitButton">EXIT</button>
     </section>
   </div>
 </template>
 
 <style scoped>
+@font-face {
+  font-family: "PokeFont";
+  src: url("../pokemonbw.otf");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+* {
+  font-family: "PokeFont", sans-serif;
+  font-size: 2rem;
+}
+
+.overall {
+  height: 100vh;
+  display: grid;
+  grid-template-columns:
+    3fr
+    2fr;
+
+  gap: 2rem;
+  padding: 1rem;
+  box-sizing: border-box;
+  background-image: url("/src/assets/baackground/background1.png");
+  background-size: cover;
+  background-position: center;
+  overflow: hidden;
+}
+
+.leftPanel{
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
 .rightSide {
   display: grid;
   grid-template-rows: 1fr auto;
@@ -282,29 +316,37 @@ async function selectPokemon(selected: PokemonListItem) {
 
 .topSection {
   display: grid;
-  grid-template-columns: 3fr 2fr;
+
+  grid-template-columns:
+    3fr
+    2fr;
+
   gap: 1rem;
+
   min-height: 0;
-  flex: 1;
 }
 
 .leftInfo {
   display: grid;
+
   grid-template-rows:
     auto
     1fr
-    auto
     auto;
 
-  gap: 1rem;
+  gap: .8rem;
+
   min-height: 0;
 }
 
+
 .panelButtons {
-  display: flex;
-  flex-direction: row;
-  gap: 1rem;
-  justify-content: space-between;
+  display:grid;
+
+  grid-template-columns:
+    repeat(3,1fr);
+
+  gap:1rem;
 }
 /* #EvolveBtn {
   background-color: #ffae17;
@@ -332,46 +374,10 @@ async function selectPokemon(selected: PokemonListItem) {
   background-color: rgb(181, 227, 243);
 }
 
-.leftPanel {
-  display: grid;
-  grid-template-rows:
-    1fr
-    90px;
-
-  gap: 1rem;
-  min-height: 0;
-}
-
-.rightPanel {
-  position: relative;
-  overflow: hidden;
-}
-
-.overall {
-  height: 100vh;
-  display: grid;
-  grid-template-columns:
-    3fr
-    2fr;
-
-  gap: 2rem;
-  padding: 1rem;
-  box-sizing: border-box;
-  background-image: url("/src/assets/baackground/background1.png");
-  background-size: cover;
-  background-position: center;
-  overflow: hidden;
-}
-
 .pokemonDetails {
   min-height: 0;
   display: flex;
   flex-direction: column;
-}
-
-.secondRow {
-  display: grid;
-  grid-template-columns: 0.9fr 1.1fr;
 }
 
 .exitButton {
@@ -383,138 +389,26 @@ async function selectPokemon(selected: PokemonListItem) {
   cursor: pointer;
 }
 
-.stats {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  border: 2px solid #cfc8bb;
-  background: white;
-  padding-top: -2rem;
-  gap: 0.5rem;
-}
-
-.stats > span {
-  text-align: center;
-  margin-bottom: 6px;
-}
-
-.stat {
-  display: grid;
-  grid-template-columns:
-    80px
-    1fr
-    50px;
-  gap: 1.2rem;
-  align-items: center;
-}
-
-.bar {
-  width: 100%;
-  height: 14px;
-  background: #ddd;
-  overflow: hidden;
-  border: 2px black solid;
-}
-
-.fill {
-  height: 100%;
-  background: radial-gradient(rgb(1, 129, 1), rgb(238, 238, 118));
-  transition: width 0.4s ease;
-}
-
-@font-face {
-  font-family: "PokeFont";
-  src: url("../pokemonbw.otf");
-  font-weight: normal;
-  font-style: normal;
-  font-display: swap;
-}
-
-* {
-  font-family: "PokeFont", sans-serif;
-  font-size: 2rem;
-}
-
-.PokemonMain {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-}
-.pokename {
-  text-transform: uppercase;
-  font-size: 3rem;
-  font-weight: 800;
-  margin: 5px;
-}
-.genus {
-  margin: -0.1rem;
-  font-size: 1.8rem;
-}
-html,
-body {
-  min-height: 100vh;
-  margin: 0;
-}
-
-.abilities {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 1rem;
-}
-
-.abilities > span {
-  font-weight: bold;
-  margin: 0;
-}
-
-.abilitylist {
-  display: flex;
-  flex-direction: row;
-  align-items: flex-start;
-  gap: 0.1rem;
-}
-
-.abilitylist > p {
-  margin-block: 0;
-  text-transform: capitalize;
-}
 .pokecontainer {
   display: grid;
 
   grid-template-rows:
-    3fr
-    1.3fr
-    70px;
+    auto      /* Pokemon title */
+    1fr       /* Main section */
+    auto;     /* Buttons */
 
-  gap: 0.8rem;
 
+  width: 100%;
   height: 100%;
-  gap: 1rem;
-  padding: 2rem;
-  border: 4px solid black;
-  background: #f7f1e7;
-  overflow: hidden;
-  box-sizing: border-box;
-}
 
-.searchContainer {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding: 1rem;
+  padding: 1.5rem;
+
+  box-sizing: border-box;
+
   border: 4px solid black;
   background: #f7f1e7;
-}
-.searchTitle {
-  margin-bottom: 0.5rem;
-}
-.searchContainer input {
-  border: none;
-  outline: none;
-  background: transparent;
+
+  overflow: auto;
 }
 
 .rightPanel {
@@ -526,90 +420,55 @@ body {
   gap: 1rem;
   min-height: 0;
   position: relative;
-  overflow: hidden;
 }
 
-.secondRow,
-.stats {
-  border: 2px solid #cfc8bb;
-  border-radius: 6px;
-  background: white;
-  padding: 1rem;
-}
-
-.sprite {
-  border: 2px solid #cfc8bb;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 5rem;
-  background-image: url("@/assets/background.jpg");
-}
-
-.normal-sprite {
-  transform: scale(2);
-}
-
-.showdown-sprite {
-  height: 40%;
-  width: auto;
-  image-rendering: pixelated;
-}
-
-.pokedex {
-  border: 2px solid #cfc8bb;
-  background: white;
-  padding-left: 1rem;
-  padding-right: 1rem;
-
-  text-align: justify;
-  line-height: 1.7rem;
-}
-
-.pokename::first-letter {
-  text-transform: uppercase;
-}
-
-.pokecontainer > h2 {
-  text-align: center;
-  font-size: 2rem;
-  text-transform: uppercase;
-}
-
-.sprite {
-  height: 270px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.sprite img {
-  transform: scale(2.4);
-  image-rendering: pixelated;
-}
-.types {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.75rem;
-}
-
-.typeimg {
-  display: flex;
-  flex-direction: row;
-  gap: 8px;
-}
-
-.types > span {
-  font-size: 2rem;
-  font-weight: bold;
-  text-transform: uppercase;
-}
 .pokemonDetails,
 .pokecontainer,
 .topSection,
 .leftInfo,
 .rightSide {
   min-height: 0;
+}
+
+
+@media (max-width: 1400px) {
+
+  .overall{
+        overflow-y: auto;
+
+  }
+  .topSection {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto;
+  }
+
+  .rightSide {
+    grid-template-rows:
+      auto
+      auto;
+  }
+
+}
+
+@media (max-width: 1100px) {
+
+  .overall {
+
+    grid-template-columns: 1fr;
+
+    grid-template-rows:
+      auto
+      auto;
+
+    height: auto;
+
+    overflow-y: auto;
+  }
+
+  .rightPanel {
+
+    height: 650px;
+  }
+
 }
 </style>

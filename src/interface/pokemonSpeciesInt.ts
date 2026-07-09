@@ -1,3 +1,4 @@
+
 export interface PokemonSpecies {
   genera: {
     genus: string
@@ -15,6 +16,16 @@ export interface PokemonSpecies {
     }
     version: {
       name: string
+    }
+  }[]
+
+  evolution_chain:{
+    url: string
+  }
+
+  varieties:{
+    pokemon:{
+      name:string
     }
   }[]
 }
