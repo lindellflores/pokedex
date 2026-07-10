@@ -7,6 +7,7 @@ import type { PokemonSpecies } from "@/interface/pokemonSpeciesInt";
 
 import formatName from "@/components/helpers/formatName";
 import normalizeSprite from "@/components/helpers/normalizeSpriteName";
+import favorite from "@/assets/pokemonPage/star.png";
 
 const props = defineProps<{
   pokemon: Pokemon;
@@ -25,21 +26,22 @@ const sprite = computed(() => {
 </script>
 
 <template>
-    <!-- Name -->
-    <div class="PokemonMain">
-      <span class="pokename">
-        No.{{ pokemon.id.toString().padStart(3, "0") }}
-        -
-        {{ formatName(pokemon.name) }}
-      </span>
+  <!-- Name -->
+  <div class="PokemonMain">
+    <span class="pokename">
+      No.{{ pokemon.id.toString().padStart(3, "0") }}
+      -
+      {{ formatName(pokemon.name) }}
+    </span>
 
-      <p class="genus">
-        The
-        {{ species?.genera.find((g) => g.language.name === "en")?.genus }}
-      </p>
-    </div>
+    <p class="genus">
+      The
+      {{ species?.genera.find((g) => g.language.name === "en")?.genus }}
+    </p>
+  </div>
 
-    <!-- Sprite -->
+  <!-- Sprite -->
+  <div class="spriteWithFavorite">
     <div class="sprite">
       <img
         v-if="sprite.includes('play.pokemonshowdown.com')"
@@ -47,42 +49,40 @@ const sprite = computed(() => {
         class="showdown-sprite"
       />
 
-      <img
-        v-else
-        :src="sprite"
-        class="normal-sprite"
-      />
+      <img v-else :src="sprite" class="normal-sprite" />
+      <img :src="favorite" class="favorite" />
     </div>
+  </div>
 
-    <!-- Types + Ability -->
-    <div class="secondRow">
-      <div class="types">
-        <span>TYPE:</span>
+  <!-- Types + Ability -->
+  <div class="secondRow">
+    <div class="types">
+      <span>TYPE:</span>
 
-        <div class="typeimg">
-          <TypeBadge
-            v-for="type in pokemon.types"
-            :key="type.slot"
-            :type="type.type.name"
-          />
-        </div>
-      </div>
-
-      <div class="abilities">
-        <span>ABILITY:</span>
-
-        <div class="abilitylist">
-          <p>
-            {{
-              pokemon.abilities
-                .filter((a) => !a.is_hidden)
-                .map((a) => formatName(a.ability.name))
-                .join(", ")
-            }}
-          </p>
-        </div>
+      <div class="typeimg">
+        <TypeBadge
+          v-for="type in pokemon.types"
+          :key="type.slot"
+          :type="type.type.name"
+        />
       </div>
     </div>
+
+    <div class="abilities">
+      <span>ABILITY:</span>
+
+      <div class="abilitylist">
+        <p>
+          {{
+            pokemon.abilities
+              .filter((a) => !a.is_hidden)
+              .map((a) => formatName(a.ability.name))
+              .join(", ")
+          }}
+        </p>
+      </div>
+    </div>
+  </div>
 </template>
 
 <style scoped>
@@ -105,6 +105,7 @@ const sprite = computed(() => {
   justify-content: center;
   align-items: center;
   text-align: center;
+  border: 2px #cfc8bb solid;
 }
 .pokename {
   text-transform: uppercase;
@@ -127,12 +128,12 @@ const sprite = computed(() => {
 }
 
 .normal-sprite {
-  max-width:100%;
-  max-height:100%;
+  max-width: 100%;
+  max-height: 100%;
 
-  transform:scale(2.4);
+  transform: scale(2.4);
 
-  image-rendering:pixelated;
+  image-rendering: pixelated;
 }
 .showdown-sprite {
   height: 100%;
@@ -141,12 +142,14 @@ const sprite = computed(() => {
 }
 
 .sprite {
-  min-height:270px;
+  min-height: 270px;
   display: flex;
   justify-content: center;
   align-items: center;
-  background:url("@/assets/background.jpg");
+  background: url("@/assets/background.jpg");
+}
 
+.favorite {
 }
 
 .secondRow {
@@ -203,5 +206,4 @@ const sprite = computed(() => {
   margin-block: 0;
   text-transform: capitalize;
 }
-
 </style>

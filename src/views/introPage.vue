@@ -5,7 +5,6 @@ import { useRouter } from "vue-router";
 import CustomTitle from "@/components/introComponents/customTitle.vue";
 import IntroVideo from "@/components/introComponents/introVideo.vue";
 import TitleLoop from "@/components/introComponents/titleLoop.vue";
-// import { useMusic } from "@/composables/useMusic";
 import dingSound from "@/assets/sounds/A-effect.m4a";
 
 const ding = new Audio(dingSound);
@@ -80,7 +79,7 @@ onUnmounted(() => window.removeEventListener("keydown", handleKey));
 
   cursor: pointer;
 
-  background-image: url("../assets/intro/emerald-bg.gif");
+  background-image: url("@/assets/intro/emerald-bg.gif");
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;

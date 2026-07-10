@@ -4,18 +4,16 @@ import { ref, computed, onMounted, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import type { Pokemon } from "@/interface/pokemonInterface.ts";
 import type { PokemonSpecies } from "@/interface/pokemonSpeciesInt.ts";
-import formatFlavorText from "@/components/helpers/formatText";
 import normalizeName from "@/components/helpers/normalizeName";
 import type { PokemonListItem } from "@/interface/pokemonListItem.ts";
 import PokemonCarousel from "@/components/pokemonComponents/PokemonCarousel.vue";
 import { useMusic } from "@/composables/useMusic";
-import { gigantamaxMap } from "@/components/helpers/gigantamax"
+import { gigantamaxMap } from "@/components/helpers/gigantamax";
 import PokemonInfo from "@/components/pokemonComponents/PokemonInfo.vue";
 import { versionPriority } from "@/components/helpers/versionPriority";
 import PokemonStats from "@/components/pokemonComponents/PokemonStats.vue";
 import PokedexEntry from "@/components/pokemonComponents/PokedexEntry.vue";
 import PokemonSearch from "@/components/pokemonComponents/PokemonSearch.vue";
-
 
 const route = useRoute();
 const { play } = useMusic();
@@ -23,65 +21,63 @@ const pokemonList = ref<PokemonListItem[]>([]);
 const species = ref<PokemonSpecies | null>(null);
 const pokemon = ref<Pokemon | null>(null);
 const loading = ref(false);
-const favorites = ref<string[]>([])
-const searchText = ref("")
+const favorites = ref<string[]>([]);
+const searchText = ref("");
 
 const error = ref("");
 const router = useRouter();
 
 function toggleFavorite() {
-  if (!pokemon.value) return
+  if (!pokemon.value) return;
 
-  const name = pokemon.value.name
-  const index = favorites.value.indexOf(name)
+  const name = pokemon.value.name;
+  const index = favorites.value.indexOf(name);
 
   if (index === -1) {
-    favorites.value.push(name)
+    favorites.value.push(name);
   } else {
-    favorites.value.splice(index, 1)
+    favorites.value.splice(index, 1);
   }
 }
 const isFavorite = computed(() => {
-  if (!pokemon.value) return false
+  if (!pokemon.value) return false;
 
-  return favorites.value.includes(pokemon.value.name)
-})
+  return favorites.value.includes(pokemon.value.name);
+});
 
 function megaEvolve() {
-  if (!species.value) return
+  if (!species.value) return;
 
-  const megaForms = species.value.varieties.filter(v =>
-    v.pokemon.name.includes("mega")
-  )
+  const megaForms = species.value.varieties.filter((v) =>
+    v.pokemon.name.includes("mega"),
+  );
 
   if (megaForms.length === 0) {
-    alert("This Pokémon has no Mega Evolution.")
-    return
+    alert("This Pokémon has no Mega Evolution.");
+    return;
   }
 
-  const mega = megaForms[0]
+  const mega = megaForms[0];
 
-if (!mega) {
-  alert("This Pokémon has no Mega Evolution.")
-  return
+  if (!mega) {
+    alert("This Pokémon has no Mega Evolution.");
+    return;
+  }
+
+  router.push(`/pokemon/${mega.pokemon.name}`);
 }
-
-router.push(`/pokemon/${mega.pokemon.name}`)
-
-}
-
 
 function gigantamax() {
-  if (!pokemon.value) return
+  if (!pokemon.value) return;
 
-  const gmax = gigantamaxMap[pokemon.value.name]
+  const gmax = gigantamaxMap[pokemon.value.name];
 
   if (!gmax) {
-    alert("This Pokémon cannot Gigantamax.")
-    return
+    alert("This Pokémon cannot Gigantamax.");
+    return;
   }
 
-  router.push(`/pokemon/${gmax}`)
+  router.push(`/pokemon/${gmax}`);
 }
 
 const pokedexEntry = computed(() => {
@@ -108,7 +104,7 @@ const filteredPokemonList = computed(() => {
   }
 
   return pokemonList.value.filter((pokemon) =>
-    pokemon.name.startsWith(searchText.value.toLowerCase())
+    pokemon.name.startsWith(searchText.value.toLowerCase()),
   );
 });
 
@@ -150,36 +146,36 @@ async function loadPokemon() {
 }
 
 async function evolve() {
-  if (!species.value || !pokemon.value) return
+  if (!species.value || !pokemon.value) return;
 
-  const response = await fetch(species.value.evolution_chain.url)
-  const evolutionData = await response.json()
+  const response = await fetch(species.value.evolution_chain.url);
+  const evolutionData = await response.json();
 
-  const chain = evolutionData.chain
+  const chain = evolutionData.chain;
 
   // First stage
   if (
     chain.species.name === pokemon.value.name &&
     chain.evolves_to.length > 0
   ) {
-    router.push(`/pokemon/${chain.evolves_to[0].species.name}`)
-    return
+    router.push(`/pokemon/${chain.evolves_to[0].species.name}`);
+    return;
   }
 
   // Second stage
   if (chain.evolves_to.length > 0) {
-    const secondStage = chain.evolves_to[0]
+    const secondStage = chain.evolves_to[0];
 
     if (
       secondStage.species.name === pokemon.value.name &&
       secondStage.evolves_to.length > 0
     ) {
-      router.push(`/pokemon/${secondStage.evolves_to[0].species.name}`)
-      return
+      router.push(`/pokemon/${secondStage.evolves_to[0].species.name}`);
+      return;
     }
   }
 
-  alert("This Pokémon cannot evolve.")
+  alert("This Pokémon cannot evolve.");
 }
 
 onMounted(() => {
@@ -217,7 +213,6 @@ async function selectPokemon(selected: PokemonListItem) {
 }
 </script>
 
-
 <template>
   <div class="overall">
     <!-- LEFT PANEL -->
@@ -233,9 +228,9 @@ async function selectPokemon(selected: PokemonListItem) {
           <!-- PokemonNameTitle -->
           <div class="topSection">
             <div class="leftInfo">
-              <PokemonInfo :pokemon="pokemon" :species="species"/>
+              <PokemonInfo :pokemon="pokemon" :species="species" />
               <div class="panelButtons">
-                <button @click="evolve"id="EvolveBtn">EVOLVE</button>
+                <button @click="evolve" id="EvolveBtn">EVOLVE</button>
                 <button @click="megaEvolve" id="MegaBtn">MEGA EVOLVE</button>
                 <button @click="gigantamax" id="GmaxBtn">GIGANTAMAX</button>
               </div>
@@ -245,7 +240,7 @@ async function selectPokemon(selected: PokemonListItem) {
             <div class="rightSide">
               <PokemonStats :pokemon="pokemon" />
               <!-- description -->
-              <PokedexEntry :text="pokedexEntry?.flavor_text ?? ''"/>
+              <PokedexEntry :text="pokedexEntry?.flavor_text ?? ''" />
             </div>
           </div>
         </div>
@@ -253,21 +248,23 @@ async function selectPokemon(selected: PokemonListItem) {
 
       <!-- SEARCH -->
 
-<PokemonSearch
-  @filter="searchText = $event"
-    :searchText="searchText"
-  @search="searchPokemon"
-/>    </section>
+      <PokemonSearch
+        @filter="searchText = $event"
+        :searchText="searchText"
+        @search="searchPokemon"
+      />
+    </section>
 
     <!-- RIGHT PANEL -->
 
     <section class="rightPanel">
-<PokemonCarousel
-  :pokemonList="filteredPokemonList"
-  :searchText="searchText"
-  :selectedPokemon="pokemon?.name ?? ''"
-  @select="selectPokemon"
-/>    <button class="exitButton">EXIT</button>
+      <PokemonCarousel
+        :pokemonList="filteredPokemonList"
+        :searchText="searchText"
+        :selectedPokemon="pokemon?.name ?? ''"
+        @select="selectPokemon"
+      />
+      <button class="exitButton">EXIT</button>
     </section>
   </div>
 </template>
@@ -302,7 +299,7 @@ async function selectPokemon(selected: PokemonListItem) {
   overflow: hidden;
 }
 
-.leftPanel{
+.leftPanel {
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -334,19 +331,17 @@ async function selectPokemon(selected: PokemonListItem) {
     1fr
     auto;
 
-  gap: .8rem;
+  gap: 0.8rem;
 
   min-height: 0;
 }
 
-
 .panelButtons {
-  display:grid;
+  display: grid;
 
-  grid-template-columns:
-    repeat(3,1fr);
+  grid-template-columns: repeat(3, 1fr);
 
-  gap:1rem;
+  gap: 1rem;
 }
 /* #EvolveBtn {
   background-color: #ffae17;
@@ -393,10 +388,9 @@ async function selectPokemon(selected: PokemonListItem) {
   display: grid;
 
   grid-template-rows:
-    auto      /* Pokemon title */
-    1fr       /* Main section */
-    auto;     /* Buttons */
-
+    auto /* Pokemon title */
+    1fr /* Main section */
+    auto; /* Buttons */
 
   width: 100%;
   height: 100%;
@@ -430,12 +424,9 @@ async function selectPokemon(selected: PokemonListItem) {
   min-height: 0;
 }
 
-
 @media (max-width: 1400px) {
-
-  .overall{
-        overflow-y: auto;
-
+  .overall {
+    overflow-y: auto;
   }
   .topSection {
     grid-template-columns: 1fr;
@@ -447,13 +438,10 @@ async function selectPokemon(selected: PokemonListItem) {
       auto
       auto;
   }
-
 }
 
 @media (max-width: 1100px) {
-
   .overall {
-
     grid-template-columns: 1fr;
 
     grid-template-rows:
@@ -466,9 +454,7 @@ async function selectPokemon(selected: PokemonListItem) {
   }
 
   .rightPanel {
-
     height: 650px;
   }
-
 }
 </style>

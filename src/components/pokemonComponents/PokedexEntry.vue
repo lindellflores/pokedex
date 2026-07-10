@@ -8,9 +8,9 @@ defineProps<{
 
 <template>
   <div class="pokedex">
-    <p>
+    <div class="{scrolling: shouldScroll}">
       {{ formatFlavorText(text) }}
-    </p>
+    </div>
   </div>
 </template>
 
@@ -29,18 +29,19 @@ defineProps<{
 }
 
 .pokedex {
-  border:2px solid #cfc8bb;
+  border: 2px solid #cfc8bb;
+  border-radius: 6px;
   background: white;
-  padding:1rem;
 
-  overflow:auto;
+  padding: 1rem;
 
-  line-height:1.4;
+  flex: 1;
+  min-height: 0;
 
-  text-align:justify;
+  overflow: hidden;
 }
-.pokedex p {
-  margin: 0;
-  font-size: 2;
+
+.pokedex > div {
+  line-height: 2rem;
 }
 </style>
