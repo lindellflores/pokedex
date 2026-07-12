@@ -11,7 +11,6 @@ export const gigantamaxMap: Record<string, string> = {
   snorlax: "snorlax-gmax",
   alcremie: "alcremie-gmax",
   appletun: "appletun-gmax",
-  blastoise: "blastoise-gmax",
   cinderace: "cinderace-gmax",
   coalossal: "coalossal-gmax",
   copperajah: "copperajah-gmax",
@@ -29,5 +28,4 @@ export const gigantamaxMap: Record<string, string> = {
   sandaconda:"sandaconda-gmax",
   toxtricity:"toxtricity-gmax",
   urshifu:"urshifu-gmax",
-  venusaur:"venusaur-gmax"
 }

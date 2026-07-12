@@ -1,8 +1,13 @@
 @font-face {
   font-family: "PokeFont";
-  src: url("./assets/fonts/pokemonbw.otf");
+  src: url("./assets/fonts/pokemon-emerald.otf");
 }
 
 body {
   font-family: "PokeFont", sans-serif;
+  color:rgb(96,96,96);
+  text-shadow:
+    1px 1px 0 rgb(208,208,200),
+    2px 2px 0 rgb(208,208,200);
+  
 }

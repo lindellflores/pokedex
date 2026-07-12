@@ -1,17 +1,40 @@
+<script setup lang="ts">
+import { RouterView } from "vue-router";
+</script>
+
 <template>
-  <transition name="fade" mode="out-in">
-    <RouterView />
-  </transition>
+  <div class="transitionBackground">
+    <RouterView v-slot="{ Component, route }">
+      <Transition name="fade-black">
+        <component
+          :is="Component"
+          :key="route.fullPath"
+        />
+      </Transition>
+    </RouterView>
+  </div>
 </template>
 
-<style scoped>
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 3s ease;
+<style>
+.transitionBackground {
+  width: 100vw;
+  height: 100vh;
+  background: black;
+  overflow: hidden;
 }
 
-.fade-enter-from,
-.fade-leave-to {
+.fade-black-enter-active,
+.fade-black-leave-active {
+  transition: opacity .45s ease;
+}
+
+.fade-black-enter-from,
+.fade-black-leave-to {
   opacity: 0;
+}
+
+.fade-black-enter-to,
+.fade-black-leave-from {
+  opacity: 1;
 }
 </style>

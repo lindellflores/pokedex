@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import "@/assets/main.css";
+
 import { nextTick, ref, onMounted, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
 

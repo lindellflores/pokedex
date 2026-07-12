@@ -34,19 +34,19 @@ import logo from "@/assets/intro/emerald-logo.png";
   color: white;
   font-size: 3rem;
   font-weight: 1000;
-  letter-spacing: 0.1em;
+  letter-spacing: 1px;
   text-align: center;
   user-select: none;
   transform: scaleX(2.5);
   text-shadow:
-    -3px -3px 0 #000,
-    3px -3px 0 #000,
-    -3px 3px 0 #000,
-    3px 3px 0 #000;
+    -4px -4px 0 #000,
+    4px -4px 0 #000,
+    -4px 4px 0 #000,
+    4px 4px 0 #000;
 
   margin-top: 3rem;
   margin-left: 2rem;
-  animation: blink 2s infinite;
+  animation: blink 1s infinite;
 }
 
 .welcome {
@@ -67,7 +67,10 @@ import logo from "@/assets/intro/emerald-logo.png";
 
 @keyframes blink {
   50% {
-    opacity: 0;
+    opacity: 0%;
+  }
+  100%{
+    opacity: 100%;
   }
 }
 </style>

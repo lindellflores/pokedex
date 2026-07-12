@@ -3,7 +3,7 @@ import { createRouter, createWebHistory } from "vue-router";
 import IntroPage from "../views/introPage.vue";
 import HomePage from "../views/homePage.vue";
 import PokemonPage from "../views/pokemonPage.vue";
-import LoadingPage from "@/views/loadingPage.vue";
+import BattlePage from "@/views/battlePage.vue";
 
 const router = createRouter({
   history: createWebHistory(),
@@ -17,8 +17,8 @@ const router = createRouter({
       component: HomePage,
     },
     {
-      path: "/loading",
-      component: LoadingPage,
+      path: "/battle",
+      component: BattlePage,
     },
     {
       path: "/pokemon/:name",

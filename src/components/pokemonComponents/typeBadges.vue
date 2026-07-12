@@ -55,7 +55,9 @@ const typeBadges: Record<string, string> = {
 
 <style scoped>
 .type-badge {
-  width: 5rem;
-  height: 2rem;
+  width: 100%;
+  max-width: 10rem;
+  height: auto;
+  image-rendering: pixelated;
 }
 </style>

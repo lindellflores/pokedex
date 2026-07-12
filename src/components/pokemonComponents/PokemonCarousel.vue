@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, onMounted, watch } from "vue";
 import { useRouter } from "vue-router";
-import type { PokemonListItem } from "@/interface/pokemonListItem";
+import type { PokemonListItem } from "@/interface/pokemonInterface.ts";
 import dingSound from "@/assets/sounds/A-effect.m4a";
 
 const ding = new Audio(dingSound);
@@ -295,12 +295,19 @@ scale(${item.scale})
   color: white;
   opacity: 0.85;
   font-size: 1.3rem;
+  text-shadow:
+    1px 1px 0 #3d6b4f,
+    2px 2px 0 #2b4a36;
 }
 
 .pokemonName {
   color: white;
   letter-spacing: 2px;
   white-space: nowrap;
+  text-shadow:
+    2px 2px 0 rgb(112,112,112),
+    3px 3px 0 rgb(112,112,112),
+    4px 4px 3px rgb(112,112,112);
 }
 
 .pokemonIcon {
@@ -321,12 +328,13 @@ scale(${item.scale})
   text-align: center;
 
   color: white;
-
+background-color: #2b4a36;
   gap: 1rem;
 }
 
 .noResults h2 {
-  font-size: 2.4rem;
+  font-size: 5rem;
+  letter-spacing: 3px;
 }
 
 .noResults p {

@@ -3,54 +3,95 @@ export interface Pokemon {
   name: string
   height: number
   weight: number
-  sprites: {
-    front_default: string
-    versions: {
-      'generation-v': {
-        'black-white': {
-          animated: {
-            back_default: string | null
-            back_female: string | null
-            back_shiny: string | null
-            back_shiny_female: string | null
-            front_default: string | null
-            front_female: string | null
-            front_shiny: string | null
-            front_shiny_female: string | null
-          } | null
-          front_default: string
-        }
-      }
-    }
-  }
-  stats: {
-    base_stat: number
-    stat: {
-      name: string
-    }
-  }[]
+  sprites: Sprites
+  stats: Stat[]
+  cries: Cries
+  types: PokemonType[]
+  abilities: Ability[]
+  species: Species
+}
 
-  cries: {
-    latest: string
-    legacy: string
-  }
-  types: {
-    slot: number
-    type: {
-      name: string
-    }
-  }[]
+export interface Sprites {
+  front_default: string
+  versions: SpriteVersions
+}
 
-  abilities: {
-    ability: {
-      name: string
-    }
-    is_hidden: boolean
-    slot: number
-  }[]
+export interface SpriteVersions {
+  "generation-v": GenerationVSprites
+}
 
-  species: {
-    name: string
-    url: string
-  }
+export interface GenerationVSprites {
+  "black-white": BlackWhiteSprites
+}
+
+export interface BlackWhiteSprites {
+  front_default: string
+  animated: AnimatedSprites | null
+}
+
+export interface AnimatedSprites {
+  front_default: string | null
+}
+
+export interface Stat {
+  base_stat: number
+  stat: NamedApiResource
+}
+
+export interface PokemonType {
+  slot: number
+  type: NamedApiResource
+}
+
+export interface Ability {
+  ability: NamedApiResource
+  is_hidden: boolean
+  slot: number
+}
+
+export interface Species {
+  name: string
+  url: string
+}
+
+export interface Cries {
+  latest: string
+  legacy: string
+}
+
+export interface NamedApiResource {
+  name: string
+}
+
+export interface PokemonListItem {
+  id: number
+  name: string
+  url: string
+}
+
+export interface PokemonSpecies {
+  genera: Genus[]
+  evolves_from_species: boolean
+  flavor_text_entries: FlavorTextEntry[]
+  evolution_chain: EvolutionChain
+  varieties: Variety[]
+}
+
+export interface Genus {
+  genus: string
+  language: NamedApiResource
+}
+
+export interface FlavorTextEntry {
+  flavor_text: string
+  language: NamedApiResource
+  version: NamedApiResource
+}
+
+export interface EvolutionChain {
+  url: string
+}
+
+export interface Variety {
+  pokemon: NamedApiResource
 }

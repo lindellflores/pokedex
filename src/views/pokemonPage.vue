@@ -1,83 +1,113 @@
 <script setup lang="ts">
-import "../assets/main.css";
-import { ref, computed, onMounted, watch } from "vue";
+import "@/assets/main.css";
+import { ref, computed, onMounted, watch, onUnmounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import type { Pokemon } from "@/interface/pokemonInterface.ts";
-import type { PokemonSpecies } from "@/interface/pokemonSpeciesInt.ts";
-import normalizeName from "@/components/helpers/normalizeName";
-import type { PokemonListItem } from "@/interface/pokemonListItem.ts";
-import PokemonCarousel from "@/components/pokemonComponents/PokemonCarousel.vue";
+
+import type { PokemonListItem } from "@/interface/pokemonInterface.ts";
+
+import { usePokemon } from "@/composables/usePokemon";
+import { usePokemonList } from "@/composables/usePokemonList";
+import { useEvolution } from "@/composables/useEvolution";
+import { usePokemonForms } from "@/composables/usePokemonForms";
 import { useMusic } from "@/composables/useMusic";
-import { gigantamaxMap } from "@/components/helpers/gigantamax";
+
+import PokemonCarousel from "@/components/pokemonComponents/PokemonCarousel.vue";
 import PokemonInfo from "@/components/pokemonComponents/PokemonInfo.vue";
-import { versionPriority } from "@/components/helpers/versionPriority";
 import PokemonStats from "@/components/pokemonComponents/PokemonStats.vue";
 import PokedexEntry from "@/components/pokemonComponents/PokedexEntry.vue";
 import PokemonSearch from "@/components/pokemonComponents/PokemonSearch.vue";
+import EvolutionAnimation from "@/components/pokemonComponents/EvolutionAnimation.vue";
+import ErrorDialogue from "@/components/pokemonComponents/ErrorDialogue.vue"
+import PokemonActions from "@/components/pokemonComponents/PokemonActions.vue";
+import { versionPriority } from "@/components/helpers/versionPriority";
+
+import pokeball from "@/assets/loading/pokeball.gif";
+
 
 const route = useRoute();
-const { play } = useMusic();
-const pokemonList = ref<PokemonListItem[]>([]);
-const species = ref<PokemonSpecies | null>(null);
-const pokemon = ref<Pokemon | null>(null);
-const loading = ref(false);
-const favorites = ref<string[]>([]);
-const searchText = ref("");
-
-const error = ref("");
 const router = useRouter();
 
-function toggleFavorite() {
-  if (!pokemon.value) return;
+const {
+  pokemon,
+  species,
+  loading,
+  error,
+  loadPokemon,
+} = usePokemon();
 
-  const name = pokemon.value.name;
-  const index = favorites.value.indexOf(name);
+const {
+  searchText,
+  filteredPokemonList,
+  loadPokemonList,
+} = usePokemonList();
 
-  if (index === -1) {
-    favorites.value.push(name);
-  } else {
-    favorites.value.splice(index, 1);
+const {
+  play,
+  pause,
+  resume,
+  playEvolution,
+  stopEvolution,
+  playEvolutionComplete,
+} = useMusic();
+
+const {
+  evolve,
+  isEvolving,
+  isFlashing,
+  isPulsing,
+  isShaking,
+  isSparkling,
+} = useEvolution(
+  pokemon,
+  species,
+  router,
+  {
+    pause,
+    resume,
+    playEvolution,
+    stopEvolution,
+    playEvolutionComplete,
+  }
+);
+
+const {
+  megaEvolve,
+  gigantamax,
+} = usePokemonForms(
+  pokemon,
+  species,
+  router,
+);
+
+const dialogOpen = ref(false);
+const dialogMessage = ref("");
+
+
+async function handleEvolution() {
+  const error = await evolve();
+
+  if (error) {
+    dialogMessage.value = error;
+    dialogOpen.value = true;
   }
 }
-const isFavorite = computed(() => {
-  if (!pokemon.value) return false;
 
-  return favorites.value.includes(pokemon.value.name);
-});
+function handleMegaEvolution() {
+  const error = megaEvolve();
 
-function megaEvolve() {
-  if (!species.value) return;
-
-  const megaForms = species.value.varieties.filter((v) =>
-    v.pokemon.name.includes("mega"),
-  );
-
-  if (megaForms.length === 0) {
-    alert("This Pokémon has no Mega Evolution.");
-    return;
+  if (error) {
+    dialogMessage.value = error;
+    dialogOpen.value = true;
   }
-
-  const mega = megaForms[0];
-
-  if (!mega) {
-    alert("This Pokémon has no Mega Evolution.");
-    return;
-  }
-
-  router.push(`/pokemon/${mega.pokemon.name}`);
 }
 
-function gigantamax() {
-  if (!pokemon.value) return;
+function handleGigantamax() {
+  const error = gigantamax();
 
-  const gmax = gigantamaxMap[pokemon.value.name];
-
-  if (!gmax) {
-    alert("This Pokémon cannot Gigantamax.");
-    return;
+  if (error) {
+    dialogMessage.value = error;
+    dialogOpen.value = true;
   }
-
-  router.push(`/pokemon/${gmax}`);
 }
 
 const pokedexEntry = computed(() => {
@@ -85,178 +115,140 @@ const pokedexEntry = computed(() => {
 
   for (const version of versionPriority) {
     const entry = species.value.flavor_text_entries.find(
-      (e) => e.language.name === "en" && e.version.name === version,
+      (entry) =>
+        entry.language.name === "en" &&
+        entry.version.name === version,
     );
+
     if (entry) {
       return entry;
     }
   }
+
   return null;
 });
 
-function searchPokemon(name: string) {
-  router.push(`/pokemon/${name.toLowerCase()}`);
+function searchPokemon() {
+  if (filteredPokemonList.value.length === 0) return;
+const firstPokemon = filteredPokemonList.value[0];
+
+if (!firstPokemon) return;
+
+router.push(`/pokemon/${firstPokemon.name}`);
 }
 
-const filteredPokemonList = computed(() => {
-  if (!searchText.value) {
-    return pokemonList.value;
-  }
-
-  return pokemonList.value.filter((pokemon) =>
-    pokemon.name.startsWith(searchText.value.toLowerCase()),
-  );
-});
-
-async function loadPokemon() {
-  loading.value = true;
-  error.value = "";
-
-  try {
-    const pokemonName = normalizeName(route.params.name as string);
-    const pokemonResponse = await fetch(
-      `https://pokeapi.co/api/v2/pokemon/${pokemonName.toLowerCase()}`,
-    );
-
-    if (!pokemonResponse.ok) {
-      throw new Error(`${pokemonName} not found`);
-    }
-
-    const fetchedPokemon: Pokemon = await pokemonResponse.json();
-
-    pokemon.value = fetchedPokemon;
-
-    const cry = new Audio(fetchedPokemon.cries.latest);
-    cry.play();
-
-    const speciesResponse = await fetch(fetchedPokemon.species.url);
-
-    if (!speciesResponse.ok) {
-      throw new Error("Species not found");
-    }
-
-    species.value = await speciesResponse.json();
-  } catch (err) {
-    error.value = err instanceof Error ? err.message : "Something went wrong";
-    pokemon.value = null;
-    species.value = null;
-  } finally {
-    loading.value = false;
-  }
+function exitHandle() {
+  router.push("/home");
 }
-
-async function evolve() {
-  if (!species.value || !pokemon.value) return;
-
-  const response = await fetch(species.value.evolution_chain.url);
-  const evolutionData = await response.json();
-
-  const chain = evolutionData.chain;
-
-  // First stage
-  if (
-    chain.species.name === pokemon.value.name &&
-    chain.evolves_to.length > 0
-  ) {
-    router.push(`/pokemon/${chain.evolves_to[0].species.name}`);
-    return;
-  }
-
-  // Second stage
-  if (chain.evolves_to.length > 0) {
-    const secondStage = chain.evolves_to[0];
-
-    if (
-      secondStage.species.name === pokemon.value.name &&
-      secondStage.evolves_to.length > 0
-    ) {
-      router.push(`/pokemon/${secondStage.evolves_to[0].species.name}`);
-      return;
-    }
-  }
-
-  alert("This Pokémon cannot evolve.");
-}
-
-onMounted(() => {
-  loadPokemon();
-  play();
-});
-watch(
-  () => route.params.name,
-  () => {
-    loadPokemon();
-  },
-);
-onMounted(async () => {
-  const response = await fetch("https://pokeapi.co/api/v2/pokemon?limit=1025");
-
-  const data = await response.json();
-
-  pokemonList.value = data.results.map(
-    (pokemon: PokemonListItem, index: number) => ({
-      id: index + 1,
-      name: pokemon.name,
-      url: pokemon.url,
-    }),
-  );
-});
 
 async function selectPokemon(selected: PokemonListItem) {
   await router.push({
     name: "pokemon",
-
     params: {
       name: selected.name,
     },
   });
 }
+
+onMounted(async () => {
+  play();
+await new Promise(resolve => setTimeout(resolve, 1000));
+
+  await Promise.all([
+    loadPokemon(route.params.name as string),
+    loadPokemonList(),
+  ]);
+});
+
+watch(
+  () => route.params.name,
+  (name) => {
+    loadPokemon(name as string);
+  },
+);
+
+onUnmounted(() => {
+  pause();
+});
 </script>
 
 <template>
+  <EvolutionAnimation :show="isEvolving" />
+
+<ErrorDialogue
+    :show="dialogOpen"
+    :message="dialogMessage"
+    @close="dialogOpen = false"
+  />
+
   <div class="overall">
     <!-- LEFT PANEL -->
     <section class="leftPanel">
       <aside class="pokemonDetails">
-        <div v-if="loading">Loading...</div>
+        <div v-if="loading">
+          <div class="loading">
+            <img
+              v-for="i in 3"
+              :key="i"
+              :src="pokeball"
+              class="pokeball"
+              :style="{ animationDelay: `${(i - 1) * 0.2}s` }"
+            />
+          </div>
+        </div>
 
-        <div v-else-if="error">
-          {{ error }}
+        <div v-else-if="error" class="errorContainer">
+          <img
+            :src="pokeball"
+            class="errorBall"
+          />
+
+          <h2>POKéMON NOT FOUND</h2>
+
+          <p>{{ error }}</p>
+          <p id="searchAgain">Please search again</p>
         </div>
 
         <div v-else-if="pokemon" class="pokecontainer">
-          <!-- PokemonNameTitle -->
           <div class="topSection">
             <div class="leftInfo">
-              <PokemonInfo :pokemon="pokemon" :species="species" />
-              <div class="panelButtons">
-                <button @click="evolve" id="EvolveBtn">EVOLVE</button>
-                <button @click="megaEvolve" id="MegaBtn">MEGA EVOLVE</button>
-                <button @click="gigantamax" id="GmaxBtn">GIGANTAMAX</button>
-              </div>
+              <PokemonInfo
+                :pokemon="pokemon"
+                :species="species"
+                :isEvolving="isEvolving"
+                :isFlashing="isFlashing"
+                :isPulsing="isPulsing"
+                :isShaking="isShaking"
+                :isSparkling="isSparkling"
+              />
+
+              <PokemonActions
+  @evolve="handleEvolution"
+  @mega="handleMegaEvolution"
+  @gigantamax="handleGigantamax"
+/>
             </div>
 
-            <!-- stats -->
+            
+
             <div class="rightSide">
               <PokemonStats :pokemon="pokemon" />
-              <!-- description -->
-              <PokedexEntry :text="pokedexEntry?.flavor_text ?? ''" />
+
+              <PokedexEntry
+                :text="pokedexEntry?.flavor_text ?? ''"
+              />
             </div>
           </div>
         </div>
       </aside>
 
-      <!-- SEARCH -->
-
       <PokemonSearch
         @filter="searchText = $event"
-        :searchText="searchText"
         @search="searchPokemon"
       />
     </section>
 
     <!-- RIGHT PANEL -->
-
     <section class="rightPanel">
       <PokemonCarousel
         :pokemonList="filteredPokemonList"
@@ -264,38 +256,36 @@ async function selectPokemon(selected: PokemonListItem) {
         :selectedPokemon="pokemon?.name ?? ''"
         @select="selectPokemon"
       />
-      <button class="exitButton">EXIT</button>
+
+      <button class="exitButton" @click="exitHandle">
+        EXIT
+      </button>
     </section>
   </div>
 </template>
-
 <style scoped>
-@font-face {
-  font-family: "PokeFont";
-  src: url("../pokemonbw.otf");
-  font-weight: normal;
-  font-style: normal;
-  font-display: swap;
-}
-
 * {
   font-family: "PokeFont", sans-serif;
   font-size: 2rem;
 }
 
 .overall {
+  width: 100vw;
   height: 100vh;
-  display: grid;
-  grid-template-columns:
-    3fr
-    2fr;
 
+  display: grid;
+  grid-template-columns: 3fr 2fr;
   gap: 2rem;
-  padding: 1rem;
+
+  padding: 2rem;
   box-sizing: border-box;
-  background-image: url("/src/assets/baackground/background1.png");
-  background-size: cover;
+
+  background-image: url("@/assets/baackground/background2.png");
+  background-repeat: no-repeat;
   background-position: center;
+  background-size: cover;
+
+  image-rendering: pixelated;
   overflow: hidden;
 }
 
@@ -305,151 +295,217 @@ async function selectPokemon(selected: PokemonListItem) {
   justify-content: center;
 }
 
-.rightSide {
+.rightPanel {
   display: grid;
-  grid-template-rows: 1fr auto;
-  gap: 1rem;
-}
-
-.topSection {
-  display: grid;
-
-  grid-template-columns:
-    3fr
-    2fr;
+  grid-template-rows: 1fr 80px;
 
   gap: 1rem;
-
   min-height: 0;
-}
 
-.leftInfo {
-  display: grid;
-
-  grid-template-rows:
-    auto
-    1fr
-    auto;
-
-  gap: 0.8rem;
-
-  min-height: 0;
-}
-
-.panelButtons {
-  display: grid;
-
-  grid-template-columns: repeat(3, 1fr);
-
-  gap: 1rem;
-}
-/* #EvolveBtn {
-  background-color: #ffae17;
-}
-#MegaBtn {
-  background-color: deepskyblue;
-}
-#GmaxBtn {
-  background-color: orangered;
-} */
-
-.panelButtons button {
-  padding: 1rem;
-  border: 1px #000000 solid;
-  border-radius: 10px;
-  box-shadow:
-    0 2px 0 0 black,
-    0 -2px 0 0 black,
-    2px 0 0 0 black,
-    -2px 0 0 0 black;
-  background-color: aquamarine;
-}
-
-.panelButtons :hover {
-  background-color: rgb(181, 227, 243);
+  position: relative;
 }
 
 .pokemonDetails {
-  min-height: 0;
   display: flex;
   flex-direction: column;
-}
-
-.exitButton {
-  justify-self: end;
-  align-self: end;
-  width: 120px;
-  height: 60px;
-  font-size: 1.3rem;
-  cursor: pointer;
+  min-height: 0;
 }
 
 .pokecontainer {
   display: grid;
-
-  grid-template-rows:
-    auto /* Pokemon title */
-    1fr /* Main section */
-    auto; /* Buttons */
+  grid-template-rows: auto 1fr auto;
 
   width: 100%;
   height: 100%;
 
   padding: 1.5rem;
-
   box-sizing: border-box;
 
-  border: 4px solid black;
-  background: #f7f1e7;
+border:4px solid #1f1f1f;
+
+box-shadow:
+    3px 0 #1f1f1f,
+   -3px 0 #1f1f1f,
+    0 3px #1f1f1f,
+    0 -3px #1f1f1f;
+  background: rgb(0, 104, 96);
 
   overflow: auto;
 }
 
-.rightPanel {
+.topSection {
   display: grid;
-  grid-template-rows:
-    1fr
-    80px;
+  grid-template-columns: 3fr 2fr;
 
   gap: 1rem;
   min-height: 0;
-  position: relative;
 }
 
-.pokemonDetails,
-.pokecontainer,
-.topSection,
-.leftInfo,
-.rightSide {
+.leftInfo {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+
+  gap: 0.8rem;
   min-height: 0;
 }
+
+.rightSide {
+  display: grid;
+  grid-template-rows: 1fr auto;
+
+  gap: 1rem;
+}
+
+
+.exitButton {
+  justify-self: end;
+  align-self: end;
+
+  width: 120px;
+  height: 60px;
+
+  font-size: 1.3rem;
+  cursor: pointer;
+  border: 4px solid black;
+  border-radius: 10px;
+  background-color: rgb(151, 93, 205);
+  font-family: "PokeFont", sans-serif;
+   color: white;
+
+  text-shadow:
+    2px 2px 0 rgb(112, 112, 112),
+    3px 3px 0 rgb(112, 112, 112),
+    4px 4px 3px rgb(112, 112, 112);
+}
+
+.exitButton:hover{
+  background-color: rgb(195, 143, 243);
+}
+
+/* ---------- Loading ---------- */
+
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  gap: 2rem;
+
+  width: 100%;
+  height: 100%;
+}
+
+.pokeball {
+  width: 80px;
+
+  image-rendering: pixelated;
+  animation: bounce 0.8s infinite ease-in-out;
+}
+
+@keyframes bounce {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-10deg);
+  }
+
+  50% {
+    transform: translateY(-25px) rotate(10deg);
+  }
+}
+
+/* ---------- Error ---------- */
+
+.errorContainer {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+
+  width: 100%;
+  height: 100%;
+  min-height: 650px;
+
+  gap: 1.5rem;
+  text-align: center;
+}
+
+.errorBall {
+  width: 80px;
+
+  image-rendering: pixelated;
+  animation: shake 1s infinite;
+}
+
+.errorContainer h2 {
+  margin: 0;
+
+  font-size: 5rem;
+  letter-spacing: 5px;
+  color: white;
+}
+
+.errorContainer p {
+  margin: 0;
+
+  max-width: 450px;
+
+  font-size: 1.6rem;
+  color: white;
+}
+
+#searchAgain {
+  font-size: 2rem;
+  font-weight: bold;
+  letter-spacing: 3px;
+  color: white;
+}
+
+@keyframes shake {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+
+  20% {
+    transform: rotate(-10deg);
+  }
+
+  40% {
+    transform: rotate(10deg);
+  }
+
+  60% {
+    transform: rotate(-10deg);
+  }
+
+  80% {
+    transform: rotate(10deg);
+  }
+}
+
+/* ---------- Responsive ---------- */
 
 @media (max-width: 1400px) {
   .overall {
     overflow-y: auto;
   }
+
   .topSection {
     grid-template-columns: 1fr;
     grid-template-rows: auto auto;
   }
 
   .rightSide {
-    grid-template-rows:
-      auto
-      auto;
+    grid-template-rows: auto auto;
   }
 }
 
 @media (max-width: 1100px) {
   .overall {
     grid-template-columns: 1fr;
-
-    grid-template-rows:
-      auto
-      auto;
+    grid-template-rows: auto auto;
 
     height: auto;
-
     overflow-y: auto;
   }
 

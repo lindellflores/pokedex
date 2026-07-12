@@ -8,29 +8,17 @@ defineProps<{
 
 <template>
   <div class="pokedex">
-    <div class="{scrolling: shouldScroll}">
+    <div>
       {{ formatFlavorText(text) }}
     </div>
   </div>
 </template>
 
 <style scoped>
-@font-face {
-  font-family: "PokeFont";
-  src: url("../pokemonbw.otf");
-  font-weight: normal;
-  font-style: normal;
-  font-display: swap;
-}
 
-* {
-  font-family: "PokeFont", sans-serif;
-  font-size: 2rem;
-}
 
 .pokedex {
-  border: 2px solid #cfc8bb;
-  border-radius: 6px;
+  border: 2px solid rgb(96, 176, 136);
   background: white;
 
   padding: 1rem;
@@ -38,7 +26,6 @@ defineProps<{
   flex: 1;
   min-height: 0;
 
-  overflow: hidden;
 }
 
 .pokedex > div {
