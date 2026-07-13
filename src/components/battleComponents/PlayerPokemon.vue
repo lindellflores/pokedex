@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import sceptile from "@/assets/battle/sceptile.png";
+import sceptile from "@/assets/battle/Sceptile.png";
 </script>
 
 <template>

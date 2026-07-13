@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import rayquaza from "@/assets/battle/rayquaza.png";
+import rayquaza from "@/assets/battle/Rayquaza.png";
 </script>
 
 <template>
