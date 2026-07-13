@@ -15,8 +15,6 @@ defineProps<{
 </template>
 
 <style scoped>
-
-
 .pokedex {
   border: 2px solid rgb(96, 176, 136);
   background: white;
@@ -25,7 +23,7 @@ defineProps<{
 
   flex: 1;
   min-height: 0;
-
+  font-size: 1.8rem;
 }
 
 .pokedex > div {

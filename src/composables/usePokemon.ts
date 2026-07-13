@@ -1,4 +1,4 @@
-import { ref } from "vue";
+import { nextTick, ref } from "vue";
 import type { Pokemon, PokemonSpecies } from "@/interface/pokemonInterface.ts";
 import normalizeName from "@/components/helpers/normalizeName";
 
@@ -16,7 +16,7 @@ export function usePokemon() {
       const pokemonName = normalizeName(name);
 
       const pokemonResponse = await fetch(
-        `https://pokeapi.co/api/v2/pokemon/${pokemonName.toLowerCase()}`
+        `https://pokeapi.co/api/v2/pokemon/${pokemonName.toLowerCase()}`,
       );
 
       if (!pokemonResponse.ok) {
@@ -25,7 +25,10 @@ export function usePokemon() {
 
       const fetchedPokemon: Pokemon = await pokemonResponse.json();
 
+      console.log("pokemon assigned");
       pokemon.value = fetchedPokemon;
+
+      await nextTick();
 
       new Audio(fetchedPokemon.cries.latest).play();
 
@@ -37,8 +40,7 @@ export function usePokemon() {
 
       species.value = await speciesResponse.json();
     } catch (err) {
-      error.value =
-        err instanceof Error ? err.message : "Something went wrong";
+      error.value = err instanceof Error ? err.message : "Something went wrong";
 
       pokemon.value = null;
       species.value = null;

@@ -1,15 +1,13 @@
 import { ref, type Ref } from "vue";
 import type { Router } from "vue-router";
 
-import type {
-  Pokemon,
-  PokemonSpecies,
-} from "@/interface/pokemonInterface";
+import type { Pokemon, PokemonSpecies } from "@/interface/pokemonInterface";
 
 export function useEvolution(
   pokemon: Ref<Pokemon | null>,
   species: Ref<PokemonSpecies | null>,
   router: Router,
+  loadPokemon: (name: string) => Promise<void>,
   music: {
     pause: () => void;
     resume: () => void;
@@ -24,6 +22,10 @@ export function useEvolution(
   const isShaking = ref(false);
   const isSparkling = ref(false);
 
+  const id = Math.random().toString(36).slice(2, 7);
+
+  console.log("Evolution instance:", id);
+  console.log(id, "starting evolution");
   function sleep(ms: number) {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
@@ -74,12 +76,13 @@ export function useEvolution(
     await sleep(6000);
 
     await router.push(`/pokemon/${nextPokemon}`);
-
-    await sleep(1000);
+    console.log(id, "after push");
+    await loadPokemon(nextPokemon);
 
     isFlashing.value = false;
     isShaking.value = false;
     isPulsing.value = false;
+    console.log("sparkle ON");
 
     isSparkling.value = true;
 

@@ -50,17 +50,13 @@ watch(
         isTyping.value = false;
       }
     }, 30);
-  }
+  },
 );
 </script>
 
 <template>
   <Transition name="fade">
-    <div
-      v-if="show"
-      class="overlay"
-      @click.self="closeDialogue"
-    >
+    <div v-if="show" class="overlay" @click.self="closeDialogue">
       <div class="dialogueBox">
         <img
           src="@/assets/sprites/error/ProfessorSprite.png"
@@ -71,16 +67,14 @@ watch(
         <div class="dialogueContent">
           <h2>PROFESSOR BIRCH</h2>
 
-          <p>{{ displayedText }}</p>
+          <p>
+            There's a time and place for everything! Unfortunately,
+            {{ displayedText }}
+          </p>
 
-          <button
-  v-if="!isTyping"
-  class="okButton"
-  @click="closeDialogue"
->
-  
-  OK
-</button>
+          <button v-if="!isTyping" class="okButton" @click="closeDialogue">
+            OK
+          </button>
         </div>
       </div>
     </div>
@@ -117,7 +111,7 @@ watch(
 
   box-shadow:
     4px 0 #1f1f1f,
-   -4px 0 #1f1f1f,
+    -4px 0 #1f1f1f,
     0 4px #1f1f1f,
     0 -4px #1f1f1f;
 }
@@ -177,14 +171,14 @@ watch(
 }
 
 .okButton {
-  font-family: 'Pokefont';
-  gap: .5rem;
+  font-family: "Pokefont";
+  gap: 0.5rem;
   text-align: center;
 }
 
 .fade-enter-active,
 .fade-leave-active {
-  transition: opacity .25s ease;
+  transition: opacity 0.25s ease;
 }
 
 .fade-enter-from,

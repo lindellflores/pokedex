@@ -4,12 +4,9 @@ import { RouterView } from "vue-router";
 
 <template>
   <div class="transitionBackground">
-    <RouterView v-slot="{ Component, route }">
+    <RouterView v-slot="{ Component }">
       <Transition name="fade-black">
-        <component
-          :is="Component"
-          :key="route.fullPath"
-        />
+        <component :is="Component" />
       </Transition>
     </RouterView>
   </div>
@@ -18,14 +15,14 @@ import { RouterView } from "vue-router";
 <style>
 .transitionBackground {
   width: 100vw;
-  height: 100vh;
+  min-height: 100vh;
   background: black;
   overflow: hidden;
 }
 
 .fade-black-enter-active,
 .fade-black-leave-active {
-  transition: opacity .45s ease;
+  transition: opacity 0.45s ease;
 }
 
 .fade-black-enter-from,

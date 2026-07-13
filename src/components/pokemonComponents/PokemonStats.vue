@@ -9,16 +9,10 @@ defineProps<{
 
 <template>
   <div class="stats">
-    <div class="statsHeader">
-      STATS
-    </div>
+    <div class="statsHeader">STATS</div>
 
     <div class="statsBody">
-      <div
-        v-for="stat in pokemon.stats"
-        :key="stat.stat.name"
-        class="stat"
-      >
+      <div v-for="stat in pokemon.stats" :key="stat.stat.name" class="stat">
         <span class="statName">
           {{ formatName(stat.stat.name) }}
         </span>
@@ -27,7 +21,7 @@ defineProps<{
           <div
             class="fill"
             :style="{
-              width: `${(stat.base_stat / 255) * 100}%`
+              width: `${(stat.base_stat / 255) * 100}%`,
             }"
           />
         </div>
@@ -43,11 +37,12 @@ defineProps<{
 <style scoped>
 * {
   font-family: "PokeFont", sans-serif;
-  font-size: 2rem;
+  font-size: 1.8rem;
 }
 .stats {
   border: 2px solid rgb(96, 176, 136);
   background: white;
+  /* max-height: 45vh; */
 }
 
 .statsHeader {
@@ -55,7 +50,7 @@ defineProps<{
   color: white;
 
   text-align: center;
-  font-size: 2.5rem;
+  font-size: 2rem;
   font-weight: bold;
   letter-spacing: 3px;
 
@@ -68,7 +63,7 @@ defineProps<{
 .statsBody {
   display: flex;
   flex-direction: column;
-  gap: .5rem;
+  gap: 0.5rem;
   padding: 1rem;
 }
 
@@ -82,7 +77,7 @@ defineProps<{
   font-weight: bold;
   margin-bottom: 0.5rem;
   padding: 1rem;
-  margin-top:-1rem;
+  margin-top: -1rem;
   color: white;
   letter-spacing: 3px;
 }
@@ -120,10 +115,7 @@ defineProps<{
 .fill {
   height: 100%;
 
-  background: radial-gradient(
-    rgb(1, 129, 1),
-    rgb(238, 238, 118)
-  );
+  background: radial-gradient(rgb(1, 129, 1), rgb(238, 238, 118));
 
   transition: width 0.4s ease;
 }

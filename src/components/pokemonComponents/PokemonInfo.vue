@@ -12,17 +12,17 @@ import {
   normalbg,
 } from "@/components/helpers/TypeBackground.ts";
 
-import sparkle from "@/assets/pokemonPage/sparkle.png"
+import sparkle from "@/assets/pokemonPage/sparkle.png";
 
 const props = defineProps<{
-    pokemon: Pokemon
-    species: PokemonSpecies | null
-    isEvolving: boolean
-    isFlashing: boolean
-    isPulsing: boolean
-    isShaking: boolean
-    isSparkling: boolean
-}>()
+  pokemon: Pokemon;
+  species: PokemonSpecies | null;
+  isEvolving: boolean;
+  isFlashing: boolean;
+  isPulsing: boolean;
+  isShaking: boolean;
+  isSparkling: boolean;
+}>();
 
 const spriteBackground = computed(() => {
   const firstType = props.pokemon.types[0]?.type.name;
@@ -48,70 +48,57 @@ const sprite = computed(() => {
     `https://play.pokemonshowdown.com/sprites/ani/${name}.gif`
   );
 });
-
 </script>
 <template>
   <div class="pokemonInfo">
     <!-- Dark Overlay -->
-    <div
-      v-if="isEvolving"
-      class="evolutionOverlay"
-    />
+    <div v-if="isEvolving" class="evolutionOverlay" />
 
     <!-- Name -->
     <div class="PokemonMain">
-  <div class="pokemonHeader">
-    No.{{ pokemon.id.toString().padStart(3, "0") }}
-    &nbsp;:&nbsp;
-    {{ formatName(pokemon.name) }}
-  </div>
+      <div class="pokemonHeader">
+        No.{{ pokemon.id.toString().padStart(3, "0") }}
+        &nbsp;:&nbsp;
+        {{ formatName(pokemon.name) }}
+      </div>
 
-  <div class="pokemonBody">
-    The
-    {{ species?.genera.find((g) => g.language.name === "en")?.genus }}
-  </div>
-</div>
+      <div class="pokemonBody">
+        The
+        {{ species?.genera.find((g) => g.language.name === "en")?.genus }}
+      </div>
+    </div>
 
     <!-- Sprite -->
     <div class="spriteWithFavorite">
       <div
+        :key="pokemon.id"
         class="sprite"
         :class="{ evolving: isEvolving }"
         :style="{
-          backgroundImage: `url(${spriteBackground})`, imageRendering: 'pixelated'
+          backgroundImage: `url(${spriteBackground})`,
+          imageRendering: 'pixelated',
         }"
       >
         <!-- Evolution Rings -->
-        <div
-          v-if="isEvolving"
-          class="ring ring1"
-        />
+        <div v-if="isEvolving" class="ring ring1" />
 
-        <div
-          v-if="isEvolving"
-          class="ring ring2"
-        />
+        <div v-if="isEvolving" class="ring ring2" />
 
-        <div
-          v-if="isEvolving"
-          class="ring ring3"
-        />
+        <div v-if="isEvolving" class="ring ring3" />
 
         <!-- Sparkles -->
         <img
-  v-for="i in 5"
-  :key="i"
-  v-if="isSparkling"
-  :src="sparkle"
-  :class="['sparkle', `sparkle${i}`]"
-/>
+          v-for="i in 5"
+          :key="i"
+          v-if="isSparkling"
+          :src="sparkle"
+          :class="['sparkle', `sparkle${i}`]"
+        />
 
         <!-- Shake -->
         <div :class="{ shakeSprite: isShaking }">
-
           <!-- Flash -->
           <div :class="{ flashSprite: isFlashing }">
-
             <!-- Pulse -->
             <img
               v-if="sprite.includes('play.pokemonshowdown.com')"
@@ -126,7 +113,6 @@ const sprite = computed(() => {
               class="normal-sprite"
               :class="{ pulsing: isPulsing }"
             />
-
           </div>
         </div>
       </div>
@@ -135,39 +121,35 @@ const sprite = computed(() => {
     <!-- Types + Ability -->
     <div class="secondRow">
       <div class="types">
-  <div class="boxHeader">
-    TYPE
-  </div>
+        <div class="boxHeader">TYPE</div>
 
-  <div class="boxBody">
-    <div class="typeimg">
-      <TypeBadge
-        v-for="type in pokemon.types"
-        :key="type.slot"
-        :type="type.type.name"
-      />
-    </div>
-  </div>
-</div>
+        <div class="boxBody">
+          <div class="typeimg">
+            <TypeBadge
+              v-for="type in pokemon.types"
+              :key="type.slot"
+              :type="type.type.name"
+            />
+          </div>
+        </div>
+      </div>
 
-<div class="abilities">
-  <div class="boxHeader">
-    ABILITY
-  </div>
+      <div class="abilities">
+        <div class="boxHeader">ABILITY</div>
 
-  <div class="boxBody">
-    <div class="abilitylist">
-      <p>
-        {{
-          pokemon.abilities
-            .filter((a) => !a.is_hidden)
-            .map((a) => formatName(a.ability.name))
-            .join(", ")
-        }}
-      </p>
-    </div>
-  </div>
-</div>
+        <div class="boxBody">
+          <div class="abilitylist">
+            <p>
+              {{
+                pokemon.abilities
+                  .filter((a) => !a.is_hidden)
+                  .map((a) => formatName(a.ability.name))
+                  .join(", ")
+              }}
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -182,26 +164,24 @@ body {
   font-family: "PokeFonts", sans-serif;
 }
 
-.pokemonInfo{
-    position:relative;
+.pokemonInfo {
+  position: relative;
 }
 
-.evolutionOverlay{
+.evolutionOverlay {
+  position: absolute;
 
-    position:absolute;
+  inset: 0;
 
-    inset:0;
+  background: black;
 
-    background:black;
+  opacity: 0.85;
 
-    opacity:.85;
+  z-index: 900;
 
-    z-index:900;
+  animation: fadeIn 0.35s forwards;
 
-    animation:fadeIn .35s forwards;
-
-    pointer-events:none;
-
+  pointer-events: none;
 }
 
 .PokemonMain {
@@ -216,7 +196,7 @@ body {
 
   text-align: center;
 
-  font-size: 3rem;
+  font-size: 2rem;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 4px;
@@ -225,27 +205,25 @@ body {
     3px 3px 0 #2b4a36,
     4px 4px 3px rgba(0, 0, 0, 0.25);
 
-padding-top: 5px;
+  padding-top: 5px;
+  padding-bottom: 2px;
 }
 
 .pokemonBody {
   text-align: center;
-  font-size: 1.8rem;
+  font-size: 1.5rem;
   padding-bottom: 5px;
 }
 
-
 .sprite.evolving {
+  position: relative;
 
-    position: relative;
+  z-index: 1000;
 
-    z-index: 1000;
-
-    box-shadow:
-        0 0 40px white,
-        0 0 80px #7dd3ff,
-        0 0 120px white;
-
+  box-shadow:
+    0 0 40px white,
+    0 0 80px #7dd3ff,
+    0 0 120px white;
 }
 
 .ring {
@@ -267,83 +245,67 @@ padding-top: 5px;
 .ring2 {
   width: 220px;
   height: 220px;
-  animation-delay: .3s;
+  animation-delay: 0.3s;
 }
 
 .ring3 {
   width: 280px;
   height: 280px;
-  animation-delay: .6s;
+  animation-delay: 0.6s;
 }
 .normal-sprite.pulsing {
-  animation: pulse .55s ease-in-out infinite;
+  animation: pulse 0.55s ease-in-out infinite;
 }
 
 .showdown-sprite.pulsing {
-  animation: pulseShowdown .55s ease-in-out infinite;
+  animation: pulseShowdown 0.55s ease-in-out infinite;
 }
 
-.shakeSprite{
-
-    animation:
-        shake .12s linear infinite;
-
-
+.shakeSprite {
+  animation: shake 0.12s linear infinite;
 }
 
 .flashSprite {
-
-    animation:
-        flash .28s linear infinite;
-
+  animation: flash 0.28s linear infinite;
 }
 
 .sprite {
+  position: relative;
 
-    position: relative;
+  display: flex;
 
-    display:flex;
+  justify-content: center;
 
-    justify-content:center;
+  align-items: center;
 
-    align-items:center;
+  overflow: visible;
 
-    
-    overflow: visible;
+  background-size: cover;
+  background-position: center;
 
-    background-size: cover;
-    background-position: center;
+  height: 270px;
 
-    height:270px;
-
-    border:2px solid rgb(96, 176, 136);
-
+  border: 2px solid rgb(96, 176, 136);
 }
 
 .sprite::before {
+  content: "";
 
-    content: "";
+  position: absolute;
+  inset: 0;
 
-    position: absolute;
-    inset: 0;
+  background: black;
 
-    background: black;
+  opacity: 0;
 
-    opacity: 0;
+  transition: opacity 0.5s ease;
 
-    transition: opacity .5s ease;
-
-
-    pointer-events: none;
+  pointer-events: none;
 }
 
 .sprite.evolving::before {
-
-    opacity: .9;
-
+  opacity: 0.9;
 }
-
-
 
 .normal-sprite {
   max-width: 100%;
@@ -367,13 +329,6 @@ padding-top: 5px;
 
 .secondRow {
   display: grid;
-  grid-template-columns: 0.9fr 1.1fr;
-  margin-top: 1rem;
-  gap: 1rem;
-}
-
-.secondRow {
-  display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1rem;
   margin-top: 1rem;
@@ -393,39 +348,29 @@ padding-top: 5px;
 
   text-align: center;
 
-  font-size: 2rem;
+  font-size: 1.8rem;
   font-weight: bold;
   letter-spacing: 2px;
 
-  padding: 0.75rem;
+  padding: 0.2rem;
 
   text-shadow:
-    1px 1px 0 rgb(112,112,112),
-    2px 2px 0 rgb(112,112,112);
+    1px 1px 0 rgb(112, 112, 112),
+    2px 2px 0 rgb(112, 112, 112);
 }
 
 .boxBody {
-display: flex;
-align-items: center;
-justify-content: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   padding: 1rem;
 }
-
-
-
 
 .typeimg {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.75rem;
 }
-
-.types > span {
-  font-size: 2rem;
-  font-weight: bold;
-  text-transform: uppercase;
-}
-
 
 .abilities > span {
   font-weight: bold;
@@ -444,212 +389,165 @@ justify-content: center;
   text-transform: capitalize;
 }
 
-@keyframes fadeIn{
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
 
-    from{
-
-        opacity:0;
-
-    }
-
-    to{
-
-        opacity:.85;
-
-    }
-
+  to {
+    opacity: 0.85;
+  }
 }
 
 @keyframes ring {
+  0% {
+    transform: scale(0.5) rotate(0deg);
 
-    0% {
+    opacity: 1;
+  }
 
-        transform:
-            scale(.5)
-            rotate(0deg);
+  100% {
+    transform: scale(1.8) rotate(180deg);
 
-        opacity:1;
-
-    }
-
-    100% {
-
-        transform:
-            scale(1.8)
-            rotate(180deg);
-
-        opacity:0;
-
-    }
-
+    opacity: 0;
+  }
 }
 
 @keyframes flash {
+  0% {
+    filter: brightness(1);
+  }
 
-    0% {
+  25% {
+    filter: brightness(4) drop-shadow(0 0 30px rgb(201, 201, 201));
+  }
 
-        filter:
-            brightness(1);
+  50% {
+    filter: brightness(5) hue-rotate(180deg);
+  }
 
-    }
+  75% {
+    filter: brightness(4) drop-shadow(0 0 30px rgb(31, 87, 255));
+  }
 
-    25% {
-
-        filter:
-            brightness(4)
-            drop-shadow(0 0 30px rgb(201, 201, 201));
-
-    }
-
-    50% {
-
-        filter:
-            brightness(5)
-            hue-rotate(180deg);
-
-    }
-
-    75% {
-
-        filter:
-            brightness(4)
-            drop-shadow(0 0 30px rgb(31, 87, 255));
-
-    }
-
-    100% {
-
-        filter:
-            brightness(1);
-
-    }
-
+  100% {
+    filter: brightness(1);
+  }
 }
 
 @keyframes shake {
-  0% { transform: scale(1) translateX(-3px); }
-  25% { transform: scale(1) translateX(3px); }
-  50% { transform: scale(1) translateY(-3px); }
-  75% { transform: scale(1) translateY(3px); }
-  100% { transform: scale(1) translateX(-3px); }
+  0% {
+    transform: scale(1) translateX(-3px);
+  }
+  25% {
+    transform: scale(1) translateX(3px);
+  }
+  50% {
+    transform: scale(1) translateY(-3px);
+  }
+  75% {
+    transform: scale(1) translateY(3px);
+  }
+  100% {
+    transform: scale(1) translateX(-3px);
+  }
 }
 
 @keyframes pulse {
-    0% {
-        transform: scale(2.4);
-    }
+  0% {
+    transform: scale(2.4);
+  }
 
-    50% {
-        transform: scale(2.6);
-    }
+  50% {
+    transform: scale(2.6);
+  }
 
-    100% {
-        transform: scale(2.4);
-    }
+  100% {
+    transform: scale(2.4);
+  }
 }
 
-
 @keyframes pulseShowdown {
-    0% {
-        transform: scale(2);
-    }
+  0% {
+    transform: scale(2);
+  }
 
-    50% {
-        transform: scale(2.08);
-    }
+  50% {
+    transform: scale(2.08);
+  }
 
-    100% {
-        transform: scale(2);
-    }
+  100% {
+    transform: scale(2);
+  }
 }
 
 .sparkle {
+  position: absolute;
 
-    position: absolute;
+  width: 42px;
 
-    width: 42px;
+  pointer-events: none;
 
-    pointer-events: none;
+  animation: sparkle 1.5s ease-out forwards;
 
-    animation: sparkle 1.5s ease-out forwards;
-
-    z-index: 1500;
-
+  z-index: 1500;
 }
 
 .sparkle1 {
+  top: 15%;
 
-    top: 15%;
-
-    left: 18%;
-
+  left: 18%;
 }
 
 .sparkle2 {
+  top: 20%;
 
-    top: 20%;
+  right: 18%;
 
-    right: 18%;
-
-    animation-delay: .2s;
-
+  animation-delay: 0.2s;
 }
 
 .sparkle3 {
+  bottom: 22%;
 
-    bottom: 22%;
+  left: 20%;
 
-    left: 20%;
-
-    animation-delay: .35s;
-
+  animation-delay: 0.35s;
 }
 
 .sparkle4 {
+  bottom: 15%;
 
-    bottom: 15%;
+  right: 18%;
 
-    right: 18%;
-
-    animation-delay: .5s;
-
+  animation-delay: 0.5s;
 }
 
 .sparkle5 {
+  top: 50%;
 
-    top: 50%;
+  left: 50%;
 
-    left: 50%;
+  transform: translate(-50%, -50%);
 
-    transform: translate(-50%, -50%);
-
-    animation-delay: .15s;
-
+  animation-delay: 0.15s;
 }
 
 @keyframes sparkle {
+  0% {
+    opacity: 0;
 
-    0% {
+    transform: scale(0.2) rotate(0deg);
+  }
 
-        opacity: 0;
+  25% {
+    opacity: 1;
+  }
 
-        transform: scale(.2) rotate(0deg);
+  100% {
+    opacity: 0;
 
-    }
-
-    25% {
-
-        opacity: 1;
-
-    }
-
-    100% {
-
-        opacity: 0;
-
-        transform: scale(1.4) rotate(180deg);
-
-    }
-
+    transform: scale(1.4) rotate(180deg);
+  }
 }
 </style>

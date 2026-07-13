@@ -1,40 +1,25 @@
 <script setup lang="ts">
 const emit = defineEmits<{
-  (e: "evolve"): void
-  (e: "mega"): void
-  (e: "gigantamax"): void
-}>()
+  (e: "evolve"): void;
+  (e: "mega"): void;
+  (e: "gigantamax"): void;
+}>();
 </script>
 
 <template>
   <div class="panelButtons">
-    <button
-      id="EvolveBtn"
-      @click="emit('evolve')"
-    >
-      EVOLVE
-    </button>
+    <button id="EvolveBtn" @click="emit('evolve')">EVOLVE</button>
 
-    <button
-      id="MegaBtn"
-      @click="emit('mega')"
-    >
-      MEGA EVOLVE
-    </button>
+    <button id="MegaBtn" @click="emit('mega')">MEGA EVOLVE</button>
 
-    <button
-      id="GmaxBtn"
-      @click="emit('gigantamax')"
-    >
-      GIGANTAMAX
-    </button>
+    <button id="GmaxBtn" @click="emit('gigantamax')">GIGANTAMAX</button>
   </div>
 </template>
 
 <style scoped>
-*{
-    font-family: 'Pokefont';
-    font-size: 2rem;
+* {
+  font-family: "Pokefont";
+  font-size: 1.5rem;
 }
 .panelButtons {
   display: grid;
@@ -44,6 +29,7 @@ const emit = defineEmits<{
 }
 
 .panelButtons button {
+  margin-top: 1rem;
   padding: 1rem;
 
   border: 4px solid black;

@@ -8,8 +8,7 @@ const ding = new Audio(dingSound);
 const props = defineProps<{
   pokemonList: PokemonListItem[];
   searchText: string;
-  selectedPokemon: string
-
+  selectedPokemon: string;
 }>();
 
 const router = useRouter();
@@ -53,7 +52,7 @@ const visiblePokemon = computed(() => {
   if (!props.pokemonList.length) return items;
 
   const radius = 580;
-  const spacing = 90;
+  const spacing = 80;
 
   for (let offset = -HALF_WINDOW; offset <= HALF_WINDOW; offset++) {
     const index = selectedIndex.value + offset;
@@ -67,24 +66,24 @@ const visiblePokemon = computed(() => {
 
     const x = radius - Math.sqrt(radius * radius - clampedY * clampedY);
 
-    const currentPokemon = props.pokemonList[index]!
+    const currentPokemon = props.pokemonList[index]!;
 
-items.push({
-  pokemon: currentPokemon,
+    items.push({
+      pokemon: currentPokemon,
 
-  id: currentPokemon.id,
+      id: currentPokemon.id,
 
-  offset,
+      offset,
 
-  x,
+      x,
 
-  y,
+      y,
 
-  opacity: 0.2 + 0.8 * Math.cos((distance / HALF_WINDOW) * (Math.PI / 2)),
-  scale: 0.85 + 0.25 * Math.cos((distance / HALF_WINDOW) * (Math.PI / 2)),
+      opacity: 0.2 + 0.8 * Math.cos((distance / HALF_WINDOW) * (Math.PI / 2)),
+      scale: 0.85 + 0.25 * Math.cos((distance / HALF_WINDOW) * (Math.PI / 2)),
 
-  zIndex: 100 - distance,
-})
+      zIndex: 100 - distance,
+    });
   }
 
   return items;
@@ -144,12 +143,14 @@ function onKeyDown(event: KeyboardEvent) {
       break;
 
     case "Enter":
+      window.scrollTo({
+        top: 0,
+        behavior: "instant",
+      });
       router.push(`/pokemon/${props.pokemonList[selectedIndex.value]!.name}`);
       playDing();
       break;
   }
-
-
 }
 
 const carouselRef = ref<HTMLDivElement | null>(null);
@@ -161,33 +162,33 @@ onMounted(() => {
 watch(
   () => props.pokemonList,
   () => {
-    selectedIndex.value = 0
-  }
-)
+    selectedIndex.value = 0;
+  },
+);
 
 watch(
   () => props.selectedPokemon,
   (name) => {
     const index = props.pokemonList.findIndex(
-      pokemon => pokemon.name === name
-    )
+      (pokemon) => pokemon.name === name,
+    );
 
     if (index !== -1) {
-      selectedIndex.value = index
+      selectedIndex.value = index;
     }
   },
-  { immediate: true }
-)
+  { immediate: true },
+);
 </script>
 
 <template>
   <div
-  v-if="pokemonList.length > 0"
-  class="carousel"
-  @wheel.prevent="onWheel"
-  tabindex="0"
-  @keydown="onKeyDown"
->
+    v-if="pokemonList.length > 0"
+    class="carousel"
+    @wheel.prevent="onWheel"
+    tabindex="0"
+    @keydown="onKeyDown"
+  >
     <div
       v-for="item in visiblePokemon"
       :class="{
@@ -196,7 +197,7 @@ watch(
       :key="item.id"
       class="listitem"
       :style="{
-        left: `${item.x + 40}px`,
+        left: `${item.x + 60}px`,
 
         top: `calc(50% + ${item.y}px)`,
 
@@ -225,17 +226,14 @@ scale(${item.scale})
       </span>
     </div>
   </div>
- <div
-  v-else
-  class="noResults"
->
-  <h2>No Pokémon Found</h2>
+  <div v-else class="noResults">
+    <h2>No Pokémon Found</h2>
 
-  <p>
-    There are no results for
-    <strong>"{{ searchText }}"</strong>
-  </p>
-</div>
+    <p>
+      There are no results for
+      <strong>"{{ searchText }}"</strong>
+    </p>
+  </div>
 </template>
 
 <style scoped>
@@ -283,11 +281,11 @@ scale(${item.scale})
     opacity 0.25s;
 }
 
-.listitem.selected{
+.listitem.selected {
   background-image: url("@/assets/dexList/dexlistsecondSelect.png");
 }
 
-.listitem.selected .pokemonIcon{
+.listitem.selected .pokemonIcon {
   animation-duration: 0.45s;
 }
 
@@ -305,14 +303,15 @@ scale(${item.scale})
   letter-spacing: 2px;
   white-space: nowrap;
   text-shadow:
-    2px 2px 0 rgb(112,112,112),
-    3px 3px 0 rgb(112,112,112),
-    4px 4px 3px rgb(112,112,112);
+    2px 2px 0 rgb(112, 112, 112),
+    3px 3px 0 rgb(112, 112, 112),
+    4px 4px 3px rgb(112, 112, 112);
 }
 
 .pokemonIcon {
   width: 3rem;
   height: 40px;
+  margin-left: 10px;
   image-rendering: pixelated;
   animation: bob 1s infinite alternate;
 }
@@ -328,7 +327,7 @@ scale(${item.scale})
   text-align: center;
 
   color: white;
-background-color: #2b4a36;
+  background-color: #2b4a36;
   gap: 1rem;
 }
 

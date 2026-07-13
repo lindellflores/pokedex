@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import "@/assets/main.css";
-import { ref, computed, onMounted, watch, onUnmounted } from "vue";
+import { ref, computed, onMounted, watch, onUnmounted, nextTick } from "vue";
 import { useRoute, useRouter } from "vue-router";
 
 import type { PokemonListItem } from "@/interface/pokemonInterface.ts";
@@ -17,29 +17,18 @@ import PokemonStats from "@/components/pokemonComponents/PokemonStats.vue";
 import PokedexEntry from "@/components/pokemonComponents/PokedexEntry.vue";
 import PokemonSearch from "@/components/pokemonComponents/PokemonSearch.vue";
 import EvolutionAnimation from "@/components/pokemonComponents/EvolutionAnimation.vue";
-import ErrorDialogue from "@/components/pokemonComponents/ErrorDialogue.vue"
+import ErrorDialogue from "@/components/pokemonComponents/ErrorDialogue.vue";
 import PokemonActions from "@/components/pokemonComponents/PokemonActions.vue";
 import { versionPriority } from "@/components/helpers/versionPriority";
 
 import pokeball from "@/assets/loading/pokeball.gif";
 
-
 const route = useRoute();
 const router = useRouter();
 
-const {
-  pokemon,
-  species,
-  loading,
-  error,
-  loadPokemon,
-} = usePokemon();
+const { pokemon, species, loading, error, loadPokemon } = usePokemon();
 
-const {
-  searchText,
-  filteredPokemonList,
-  loadPokemonList,
-} = usePokemonList();
+const { searchText, filteredPokemonList, loadPokemonList } = usePokemonList();
 
 const {
   play,
@@ -50,38 +39,21 @@ const {
   playEvolutionComplete,
 } = useMusic();
 
-const {
-  evolve,
-  isEvolving,
-  isFlashing,
-  isPulsing,
-  isShaking,
-  isSparkling,
-} = useEvolution(
-  pokemon,
-  species,
-  router,
-  {
+const { evolve, isEvolving, isFlashing, isPulsing, isShaking, isSparkling } =
+  useEvolution(pokemon, species, router, loadPokemon, {
     pause,
     resume,
     playEvolution,
     stopEvolution,
     playEvolutionComplete,
-  }
-);
+  });
 
-const {
-  megaEvolve,
-  gigantamax,
-} = usePokemonForms(
-  pokemon,
-  species,
-  router,
-);
+const { megaEvolve, gigantamax } = usePokemonForms(pokemon, species, router);
 
 const dialogOpen = ref(false);
 const dialogMessage = ref("");
 
+const rightPanel = ref<HTMLElement | null>(null);
 
 async function handleEvolution() {
   const error = await evolve();
@@ -115,9 +87,7 @@ const pokedexEntry = computed(() => {
 
   for (const version of versionPriority) {
     const entry = species.value.flavor_text_entries.find(
-      (entry) =>
-        entry.language.name === "en" &&
-        entry.version.name === version,
+      (entry) => entry.language.name === "en" && entry.version.name === version,
     );
 
     if (entry) {
@@ -130,11 +100,11 @@ const pokedexEntry = computed(() => {
 
 function searchPokemon() {
   if (filteredPokemonList.value.length === 0) return;
-const firstPokemon = filteredPokemonList.value[0];
+  const firstPokemon = filteredPokemonList.value[0];
 
-if (!firstPokemon) return;
+  if (!firstPokemon) return;
 
-router.push(`/pokemon/${firstPokemon.name}`);
+  router.push(`/pokemon/${firstPokemon.name}`);
 }
 
 function exitHandle() {
@@ -152,8 +122,6 @@ async function selectPokemon(selected: PokemonListItem) {
 
 onMounted(async () => {
   play();
-await new Promise(resolve => setTimeout(resolve, 1000));
-
   await Promise.all([
     loadPokemon(route.params.name as string),
     loadPokemonList(),
@@ -175,7 +143,7 @@ onUnmounted(() => {
 <template>
   <EvolutionAnimation :show="isEvolving" />
 
-<ErrorDialogue
+  <ErrorDialogue
     :show="dialogOpen"
     :message="dialogMessage"
     @close="dialogOpen = false"
@@ -198,10 +166,7 @@ onUnmounted(() => {
         </div>
 
         <div v-else-if="error" class="errorContainer">
-          <img
-            :src="pokeball"
-            class="errorBall"
-          />
+          <img :src="pokeball" class="errorBall" />
 
           <h2>POKéMON NOT FOUND</h2>
 
@@ -223,33 +188,26 @@ onUnmounted(() => {
               />
 
               <PokemonActions
-  @evolve="handleEvolution"
-  @mega="handleMegaEvolution"
-  @gigantamax="handleGigantamax"
-/>
+                @evolve="handleEvolution"
+                @mega="handleMegaEvolution"
+                @gigantamax="handleGigantamax"
+              />
             </div>
-
-            
 
             <div class="rightSide">
               <PokemonStats :pokemon="pokemon" />
 
-              <PokedexEntry
-                :text="pokedexEntry?.flavor_text ?? ''"
-              />
+              <PokedexEntry :text="pokedexEntry?.flavor_text ?? ''" />
             </div>
           </div>
         </div>
       </aside>
 
-      <PokemonSearch
-        @filter="searchText = $event"
-        @search="searchPokemon"
-      />
+      <PokemonSearch @filter="searchText = $event" @search="searchPokemon" />
     </section>
 
     <!-- RIGHT PANEL -->
-    <section class="rightPanel">
+    <section ref="rightPanel" class="rightPanel" tabindex="0">
       <PokemonCarousel
         :pokemonList="filteredPokemonList"
         :searchText="searchText"
@@ -257,9 +215,7 @@ onUnmounted(() => {
         @select="selectPokemon"
       />
 
-      <button class="exitButton" @click="exitHandle">
-        EXIT
-      </button>
+      <button class="exitButton" @click="exitHandle">EXIT</button>
     </section>
   </div>
 </template>
@@ -286,7 +242,6 @@ onUnmounted(() => {
   background-size: cover;
 
   image-rendering: pixelated;
-  overflow: hidden;
 }
 
 .leftPanel {
@@ -303,6 +258,15 @@ onUnmounted(() => {
   min-height: 0;
 
   position: relative;
+  outline: none;
+}
+
+.rightPanel:hover {
+  outline: none;
+}
+
+.rightPanel:focus-visible {
+  outline: none;
 }
 
 .pokemonDetails {
@@ -321,11 +285,11 @@ onUnmounted(() => {
   padding: 1.5rem;
   box-sizing: border-box;
 
-border:4px solid #1f1f1f;
+  border: 4px solid #1f1f1f;
 
-box-shadow:
+  box-shadow:
     3px 0 #1f1f1f,
-   -3px 0 #1f1f1f,
+    -3px 0 #1f1f1f,
     0 3px #1f1f1f,
     0 -3px #1f1f1f;
   background: rgb(0, 104, 96);
@@ -345,17 +309,15 @@ box-shadow:
   display: grid;
   grid-template-rows: auto 1fr auto;
 
-  gap: 0.8rem;
   min-height: 0;
 }
 
 .rightSide {
   display: grid;
-  grid-template-rows: 1fr auto;
+  grid-template-rows: auto auto;
 
   gap: 1rem;
 }
-
 
 .exitButton {
   justify-self: end;
@@ -364,13 +326,13 @@ box-shadow:
   width: 120px;
   height: 60px;
 
-  font-size: 1.3rem;
+  font-size: 1rem;
   cursor: pointer;
   border: 4px solid black;
   border-radius: 10px;
   background-color: rgb(151, 93, 205);
   font-family: "PokeFont", sans-serif;
-   color: white;
+  color: white;
 
   text-shadow:
     2px 2px 0 rgb(112, 112, 112),
@@ -378,7 +340,7 @@ box-shadow:
     4px 4px 3px rgb(112, 112, 112);
 }
 
-.exitButton:hover{
+.exitButton:hover {
   background-color: rgb(195, 143, 243);
 }
 
@@ -488,15 +450,19 @@ box-shadow:
 @media (max-width: 1400px) {
   .overall {
     overflow-y: auto;
+    align-items: start;
+  }
+
+  .leftPanel,
+  .pokemonDetails,
+  .pokecontainer {
+    height: auto;
+    min-height: fit-content;
+    overflow: visible;
   }
 
   .topSection {
     grid-template-columns: 1fr;
-    grid-template-rows: auto auto;
-  }
-
-  .rightSide {
-    grid-template-rows: auto auto;
   }
 }
 

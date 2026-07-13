@@ -1,21 +1,47 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import BattleTransition from "@/components/battleComponents/BattleTransition.vue";
+import BattleBackground from "@/components/battleComponents/BattleBackground.vue";
+import BattleTextbox from "@/components/battleComponents/BattleTextBox.vue";
+import battleMusic from "@/assets/sounds/BattleStart.mp3";
 
-const video = ref<HTMLVideoElement>()
+import { onMounted, ref } from "vue";
 
-onMounted(async () => {
-  try {
-    await video.value?.play()
-  } catch (err) {
-    console.log('Autoplay blocked')
-  }
-})
+const music = new Audio(battleMusic);
+
+const battleStarted = ref(false);
+
+function onTransitionFinished() {
+  battleStarted.value = true;
+}
+
+onMounted(() => {
+  music.play();
+});
 </script>
 
 <template>
-  <video ref="video">
-  </video>
+  <div class="battlePage">
+    <BattleBackground />
 
+    <BattleTransition v-if="!battleStarted" @finished="onTransitionFinished" />
+
+    <BattleTextbox
+      :message="
+        battleStarted ? 'What will Sceptile do?' : 'A wild Pokémon appeared!'
+      "
+    />
+  </div>
 </template>
 
+<style scoped>
+.battlePage {
+  position: relative;
 
+  width: 100vw;
+  height: 100vh;
+
+  overflow: hidden;
+
+  background: black;
+}
+</style>
